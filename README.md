@@ -53,6 +53,13 @@ While it rests, the island is a small black pill that tells you what's going on,
 
 <p align="center"><img src="docs/brand/readme/glance.webp" width="880" alt="Six resting islands: music playing, a focus timer, volume, headphones connected, money in, and minutes to the next prayer"></p>
 
+### Living connectivity toasts
+
+**New in 0.2.14.** Oyenza Studio shows an animated notch notification whenever device connections or network states change:
+- **Bluetooth:** Displays the device name and real-time battery percentage with a subtle blue ring and double-pulse animation for headphones, earbuds, speakers, mice, keyboards, and game controllers.
+- **Wi-Fi & Ethernet:** Shows network SSID or "Ethernet" with smooth double pulse rings when connected, and a soft red alert with an offline icon upon disconnect.
+- **Clean notch design:** Dark capsule matching the island body with no cluttering discs, subtle drop shadow, and fixed 40×40 px icon containers.
+
 ### From your phone to your PC, no app needed
 
 Open the Shelf, scan the code with your phone's camera, pick photos or files and tap **Send**. The island asks first, then they land on the Shelf. It works with iPhones and Android phones over your own Wi-Fi, and a phone you pair once can send from any network.
@@ -79,7 +86,7 @@ On a desktop, **Power** shows what the whole PC draws: split into the CPU, the g
 
 ### The small things, one hover away
 
-**Focus** is a Pomodoro timer that keeps counting in the island. **Tasks** is a tiny to-do list. **Today** has the date and the next five weeks, and once you [sign in to Oyenza](#oyenza-optional), your schedule: the meeting on now with **Join**, the rest of today, then the weeks ahead from Google Calendar, with your flights from Gmail and the bills due. Click a date to start the list there. **Shelf** keeps the files you drop on the island. The tabs run Music, Today, Shelf, Tasks, Focus, then Oyenza, with Oyen himself as its tab; Health and System are [add-ons](#add-ons). Scroll over the top of the island to switch pages.
+**Focus** is a Pomodoro timer that keeps counting in the island. **Tasks** is a lightweight to-do list with support for checking off items, adding new tasks, and inline editing by clicking an existing task's text. **Today** has the date and the next five weeks, and once you [sign in to Oyenza](#oyenza-optional), your schedule: the meeting on now with **Join**, the rest of today, then the weeks ahead from Google Calendar, with your flights from Gmail and the bills due. Click a date to start the list there. **Shelf** keeps the files you drop on the island. The tabs run Music, Today, Shelf, Tasks, Focus, then Oyenza, with Oyen himself as its tab; Health and System are [add-ons](#add-ons). Scroll over the top of the island to switch pages.
 
 <p align="center"><img src="docs/brand/readme/pages.webp" width="880" alt="Four open pages, in the order of the tabs: Today, the Shelf, Tasks and the Focus timer"></p>
 
@@ -133,6 +140,19 @@ On Windows it draws on your graphics card in step with your display's refresh ra
 - **No account, no tracking.** Tasks, the Shelf and focus history are files in your own user folder. There are no ads and no analytics.
 - **Your files stay yours.** Phone drop asks before it takes anything and uses your own Wi-Fi. Files from paired phones are encrypted with keys made on the two devices, and the meeting server never sees them.
 - **Little goes online.** Lyrics lookups go to LRCLIB while a song plays, and once an hour the app reads one small file to see whether a new version is out. Apple Music lyrics, Oyenza, paired phones and add-ons connect only after you turn them on. [PRIVACY.md](PRIVACY.md) lists every request.
+
+## Prerequisites
+
+### For Users
+- **Windows:** Windows 10 (version 2004 or later recommended for the Glass effect) or Windows 11.
+- **macOS:** macOS 14 (Sonoma) or later (Apple silicon and Intel supported).
+
+### For Developers & Building from Source
+- **Rust:** Stable toolchain (`rustup default stable`).
+- **Windows Build:** Visual Studio C++ Build Tools (MSVC toolchain).
+- **macOS Build:** Xcode Command Line Tools.
+- **Cross-Compilation:** `mingw-w64` and target `x86_64-pc-windows-gnu` for building Windows binaries from Linux/macOS.
+- **Optional Tools:** Python 3 (for build and asset helper scripts), Node.js (for the paired-drop WebRTC relay in `server/`).
 
 ## Install
 
@@ -425,9 +445,39 @@ The README's feature pictures are drawn from those same screenshots by `tools/ma
 
 [The stats page](https://github.com/lucacadalora/oyenza-studio/blob/metrics/README.md) shows downloads per release and per day. Every hour `.github/workflows/metrics.yml` reads GitHub's download counters with `tools/download_metrics.py` and keeps the history on the `metrics` branch. Downloads made by our own CI (the install test fetches the 0.1.1 installer on every push) are left out. The app itself counts nothing.
 
+## Contributing
+
+Contributions, bug reports, and suggestions are warmly welcome!
+
+### Core Principles ("Keep it light")
+Before modifying the app or proposing changes, please keep in mind the core rules (from `AGENTS.md`):
+- **Zero CPU at rest:** Nothing runs while the island is idle or resting (display off, session locked, or battery saver enabled).
+- **Measure CPU in cycles, not milliseconds:** Windows ticks (15.6 ms) can hide heavy micro-work. Use cycle counters (`QueryProcessCycleTime` / `QueryThreadCycleTime`).
+- **Lazy-load heavy components:** WinRT classes, performance counters, and audio devices load only when the feature is actively opened.
+- **Lightweight binary:** Heavy data (place lists, models, dictionaries) are add-ons downloaded on-demand, not embedded in `poni.exe`.
+
+### Development & Testing
+1. Fork the repository and create your feature branch (`git checkout -b feature/my-feature`).
+2. Verify all cargo tests pass:
+   ```bash
+   cargo test --workspace
+   ```
+3. Run the automated selftest tour to check rendering, animations, and layouts:
+   ```bash
+   cargo build -p poni --release
+   target\release\poni.exe --selftest selftest-out
+   ```
+4. Submit a Pull Request describing what it costs (memory at rest, download size, any new frame overhead).
+
 ## Status
 
 Early, but in daily use on Windows 11. The Mac app is newer: it runs on GitHub's macOS runners on every change, and a real MacBook's notch, music apps and drag and drop are where it most needs reports. Most rough edges are in places a test machine can't fully exercise: specific media players, Bluetooth devices, and multi-monitor setups. Issues and pull requests are welcome. Please attach `%LOCALAPPDATA%\Poni\poni.log` (on a Mac, `~/Library/Logs/Poni/poni.log`) when something misbehaves.
+
+## Community & Support
+
+- **Website:** [studio.oyenza.com](https://studio.oyenza.com/)
+- **Bug Reports & Issues:** [GitHub Issues](https://github.com/lucacadalora/oyenza-studio/issues)
+- **Financial Integration:** [oyenza.app](https://oyenza.app)
 
 ## Credits
 
