@@ -97,7 +97,7 @@ impl Pomodoro {
     /// Elapsed fraction 0..=1 of the current phase.
     pub fn progress(&self, now: f64) -> f32 {
         let total = self.phase_duration(self.phase);
-        (1.0 - self.remaining(now) / total).clamp(0.0, 1.0) as f32
+        (self.remaining(now) / total).clamp(0.0, 1.0) as f32
     }
 
     pub fn is_running(&self) -> bool {
@@ -227,7 +227,8 @@ mod tests {
         assert_eq!(p.remaining(500.0), 1400.0);
         p.start(500.0);
         assert_eq!(p.remaining(600.0), 1300.0);
-        assert!((p.progress(600.0) - (200.0 / 1500.0) as f32).abs() < 1e-6);
+        assert!((p.progress(600.0) - (1300.0 / 1500.0) as f32).abs() < 1e-6);
+        assert!((pomo().progress(0.0) - 1.0).abs() < 1e-6);
     }
 
     #[test]

@@ -822,6 +822,7 @@ enum Scene {
     VolumeHud,
     ChargingHud,
     BluetoothHud,
+    WifiHud,
     HealthNotice,
     Page(PageKind),
     /// The shelf while files are dragged over the island.
@@ -1014,7 +1015,7 @@ const SAMPLE_SCRIPT: &str = "Hi everyone, this one takes two minutes. Today I'll
 Drop any file on the island and it waits on the Shelf. Press the phone button, scan the code, and the file is on your phone. \
 No cable, no account, nothing to install on the phone.\n\nThat's it. Thanks for watching.";
 
-const SCENES: [Scene; 98] = [
+const SCENES: [Scene; 99] = [
     Scene::IdleClock,
     Scene::IdleEyes,
     Scene::Media,
@@ -1023,6 +1024,7 @@ const SCENES: [Scene; 98] = [
     Scene::VolumeHud,
     Scene::ChargingHud,
     Scene::BluetoothHud,
+    Scene::WifiHud,
     Scene::HealthNotice,
     Scene::Page(PageKind::Media),
     Scene::Page(PageKind::Focus),
@@ -1148,6 +1150,7 @@ impl Scene {
             Scene::VolumeHud => "volume-hud".into(),
             Scene::ChargingHud => "charging-hud".into(),
             Scene::BluetoothHud => "bluetooth-hud".into(),
+            Scene::WifiHud => "wifi-hud".into(),
             Scene::HealthNotice => "health-notice".into(),
             Scene::Page(p) => format!("page-{}", p.key()),
             Scene::ShelfDrop => "page-shelf-drop".into(),
@@ -1600,6 +1603,7 @@ impl SelfTest {
         st.settings.hud_volume = true;
         st.settings.hud_power = true;
         st.settings.hud_bluetooth = true;
+        st.settings.hud_wifi = true;
         st.accent = palette::BLUE;
         st.pinned = false;
         st.volume = VolumeState { level: 0.64, muted: false, known: true };
@@ -2098,6 +2102,9 @@ impl SelfTest {
             Scene::BluetoothHud => {
                 Some(Hud { kind: HudKind::Bluetooth { name: "Sound Buds".into(), connected: true, battery: Some(80), audio: true }, until })
             }
+            Scene::WifiHud => {
+                Some(Hud { kind: HudKind::Wifi { ssid: "Home Network".into(), connected: true }, until })
+            }
             Scene::LowBatteryHud => Some(Hud { kind: HudKind::LowBattery { percent: LOW_BATTERY }, until }),
             _ => None,
         };
@@ -2339,7 +2346,7 @@ impl SelfTest {
         } else if scene.rests_aside() {
             // Nothing drawn over the window under the island: the strip it
             // rests as is there only for the pointer (alpha 1/255 at most).
-            let seen = px.chunks_exact(4).filter(|p| p[3] > 1).count();
+            let seen = px.as_chunks::<4>().0.iter().filter(|p| p[3] > 1).count();
             checks.push(check("aside-invisible", seen == 0, format!("{seen} pixels drawn with alpha above 1/255")));
             let (mode, aside) = app.selftest_mode();
             // The Hidden look's strip: 150 wide, as short as the island gets (8).
@@ -2545,7 +2552,7 @@ impl SelfTest {
         let r = app.selftest_capture_rect();
         let cx_dip = app.selftest_surface().2 as f32 / 2.0 / scale;
         let mut seen = px.to_vec();
-        for (i, p) in seen.chunks_exact_mut(4).enumerate() {
+        for (i, p) in seen.as_chunks_mut::<4>().0.iter_mut().enumerate() {
             let (x, y) = ((i as i32 % w) + r.left, (i as i32 / w) + r.top);
             let bg = backdrop_dip(run.dark_page(), (x as f32 + 0.5) / scale - cx_dip, (y as f32 + 0.5) / scale);
             let inv = 1.0 - p[3] as f32 / 255.0;
@@ -3306,7 +3313,7 @@ fn backdrop_dip(dark: bool, x: f32, y: f32) -> [u8; 3] {
         // A heading of chunky letters, its lower half under the open island's rim.
         if (171.0..209.0).contains(&y) && on_word(x, -364.0, -20.0, 3) {
             let k = ((x + 364.0) / 9.0) as i32;
-            if !((186.0..193.0).contains(&y) && hash(k) % 3 == 0) {
+            if !((186.0..193.0).contains(&y) && hash(k).is_multiple_of(3)) {
                 c = [255, 255, 255];
             }
         }
@@ -3349,7 +3356,7 @@ fn backdrop_dip(dark: bool, x: f32, y: f32) -> [u8; 3] {
     if y > top && y < 262.0 && bx < 10.0 {
         c = [150, 158, 178];
         let (wx, wy) = ((x * 2.0) as i32, (y * 1.0) as i32);
-        if wy % 6 < 2 && wx % 4 < 2 && hash(b.wrapping_mul(97).wrapping_add(wy)) % 5 == 0 {
+        if wy % 6 < 2 && wx % 4 < 2 && hash(b.wrapping_mul(97).wrapping_add(wy)).is_multiple_of(5) {
             c = [255, 214, 150];
         }
     }

@@ -889,7 +889,7 @@ fn file_description(path: &str) -> Option<String> {
     // from the file itself, and some tools write it in bytes, not characters.
     let units = |p: *mut core::ffi::c_void, len: u32| -> &[u16] {
         let start = (p as usize).wrapping_sub(data.as_ptr() as usize);
-        if p.is_null() || start >= data.len() || start % 2 != 0 {
+        if p.is_null() || start >= data.len() || !start.is_multiple_of(2) {
             return &[];
         }
         let n = (len as usize).min((data.len() - start) / 2);
@@ -902,7 +902,7 @@ fn file_description(path: &str) -> Option<String> {
     let mut keys = Vec::new();
     if unsafe { VerQueryValueW(block, w!("\\VarFileInfo\\Translation"), &mut p, &mut len) }.as_bool() {
         let t = units(p, len / 2);
-        keys.extend(t.chunks_exact(2).map(|c| format!("{:04x}{:04x}", c[0], c[1])));
+        keys.extend(t.as_chunks::<2>().0.iter().map(|c| format!("{:04x}{:04x}", c[0], c[1])));
     }
     keys.extend(["040904b0", "040904e4", "000004b0"].map(String::from));
     for k in keys {
@@ -1066,7 +1066,7 @@ impl Pdh {
         let mut v = PDH_FMT_COUNTERVALUE::default();
         let r = unsafe { PdhGetFormattedCounterValue(counter?, PDH_FMT(PDH_FMT_DOUBLE.0 | PDH_FMT_NOCAP100), None, &mut v) };
         // CStatus 0 = valid data, 1 = new data (also valid).
-        (r == 0 && v.CStatus <= 1).then(|| unsafe { v.Anonymous.doubleValue }).filter(|x| x.is_finite())
+        (r == 0 && v.CStatus <= 1).then_some(unsafe { v.Anonymous.doubleValue }).filter(|x| x.is_finite())
     }
 
     /// Every instance of a wildcard counter, as (instance name, value).

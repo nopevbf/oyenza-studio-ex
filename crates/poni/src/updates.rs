@@ -95,11 +95,11 @@ impl Updater {
             memory.ran = VERSION.to_string();
             save(&path, &memory);
         }
-        let due = Some(memory.next_check(now));
+        let due = memory.next_check(now);
         let u = Updater {
             path,
             memory,
-            due,
+            due: Some(due),
             updated,
             asked: None,
             told: None,
@@ -111,7 +111,7 @@ impl Updater {
         u.show(st);
         u.clear_old_setups(st);
         let latest = u.memory.latest.as_ref().map_or("none", |r| r.version.as_str());
-        crate::pinfo!("updates: latest known {latest}, offering {:?}, next look in {} s", st.update.offer.as_ref().map(|r| &r.version), due.unwrap_or(now).saturating_sub(now));
+        crate::pinfo!("updates: latest known {latest}, offering {:?}, next look in {} s", st.update.offer.as_ref().map(|r| &r.version), due.saturating_sub(now));
         u
     }
 
@@ -471,7 +471,7 @@ pub fn updated_notice(headline: Option<String>, until: f64) -> Notice {
     }
 }
 
-fn save(path: &PathBuf, memory: &Memory) {
+fn save(path: &std::path::Path, memory: &Memory) {
     if let Err(e) = save_json_atomic(path, memory) {
         crate::pwarn!("updates: couldn't save {} ({e})", path.display());
     }

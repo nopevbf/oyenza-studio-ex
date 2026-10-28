@@ -56,4 +56,9 @@ mod tests {
         assert_eq!(url("0.2.3", "test", "c7d77c8"), "https://github.com/lucacadalora/oyenza-studio/commit/c7d77c8");
         assert_eq!(url("0.2.3", "local", ""), "https://github.com/lucacadalora/oyenza-studio/releases");
     }
+
+    #[test]
+    fn test_version_is_0_2_14() {
+        assert_eq!(VERSION, "0.2.14");
+    }
 }

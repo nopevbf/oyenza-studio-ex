@@ -61,6 +61,7 @@ pub fn geom(t: HudTag, st: &AppState) -> Option<Geom> {
         HudTag::Volume => VOLUME_W,
         HudTag::Charging | HudTag::LowBattery => BATTERY_W,
         HudTag::Bluetooth => bluetooth_w(st),
+        HudTag::Wifi => wifi_w(st),
     };
     Some(Geom::new(w, H, H / 2.0))
 }
@@ -76,6 +77,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, _t: HudTag, body: Rect) -> bool {
         }
         HudKind::LowBattery { percent } => power(ui, body, Icon::Battery, palette::RED, "Low battery", percent, false),
         HudKind::Bluetooth { name, connected, battery, audio } => bluetooth(ui, st, body, &name, connected, battery, audio),
+        HudKind::Wifi { ssid, connected } => wifi(ui, st, body, &ssid, connected),
     }
     true
 }
@@ -179,8 +181,11 @@ fn power(ui: &mut Ui, body: Rect, icon: Icon, color: Color, label: &str, percent
 fn bluetooth(ui: &mut Ui, st: &AppState, body: Rect, name: &str, connected: bool, battery: Option<u8>, audio: bool) {
     let cy = body.center().y;
     let c = Point::new(body.x + body.h / 2.0, cy);
-    let (disc, glyph) = if connected { (st.accent, ink_on(st.accent)) } else { (Color::white(0.16), palette::TEXT) };
-    ui.c.fill_circle(c, DISC / 2.0, disc);
+    ui.c.fill_circle(c, DISC / 2.0, Color::white(0.12));
+    if connected {
+        ui.c.stroke_circle(c, DISC / 2.0 + 0.5, palette::BLUE, 1.5);
+    }
+    let glyph = if connected { palette::ON_ACCENT } else { palette::TEXT };
     ui.c.icon(if audio { Icon::Headphones } else { Icon::Bluetooth }, Rect::from_center(c, DISC_GLYPH, DISC_GLYPH), glyph);
 
     let (name_st, state_st) = (label_style(), TextStyle::body().color(palette::TEXT_DIM));
@@ -224,6 +229,7 @@ fn text_upto(ui: &mut Ui, s: &str, w: f32, x: f32, body: Rect, room: f32, ts: &T
 }
 
 /// White on the accent, dark on a very light one (as the Today page's date).
+#[allow(dead_code)]
 fn ink_on(fill: Color) -> Color {
     if fill.luminance() > 0.6 {
         palette::ON_ACCENT_DARK
@@ -310,4 +316,32 @@ mod tests {
         // No battery reading: no room kept for one.
         assert!(w("Sound Buds", None) < usual);
     }
+}
+
+fn wifi(ui: &mut Ui, _st: &AppState, body: Rect, ssid: &str, connected: bool) {
+    let cy = body.center().y;
+    let c = Point::new(body.x + body.h / 2.0, cy);
+    if connected {
+        ui.c.stroke_circle(c, DISC / 2.0 + 0.5, palette::BLUE, 1.5);
+    }
+    let glyph = if connected { palette::ON_ACCENT } else { palette::TEXT };
+    ui.c.icon(Icon::Wifi, Rect::from_center(c, DISC_GLYPH, DISC_GLYPH), glyph);
+
+    let (name_st, state_st) = (label_style(), TextStyle::body().color(palette::TEXT_DIM));
+    let state = if connected { "Connected" } else { "Disconnected" };
+    let sw = ui.c.measure(state, &state_st, 400.0).0;
+    let name = if ssid.is_empty() { "Wi-Fi" } else { ssid };
+    let nw = ui.c.measure(name, &name_st, 10_000.0).0;
+    let x = body.x + TEXT_X;
+    let full = body.w.max(wifi_w(_st));
+    let right = body.right() - BATTERY_INSET;
+    ui.c.text(state, Rect::new(right - sw - 2.0, body.y, sw + 2.0, body.h), &state_st.right());
+    text_upto(ui, name, nw, x, body, full - TEXT_X - BATTERY_INSET - sw - SEP, &name_st);
+}
+
+fn wifi_w(st: &AppState) -> f32 {
+    let Some(HudKind::Wifi { ssid, connected }) = st.hud.as_ref().map(|h| &h.kind) else { return BT_MIN_W };
+    let state = approx_w(if *connected { "Connected" } else { "Disconnected" });
+    let name = if ssid.is_empty() { "Wi-Fi" } else { ssid.as_str() };
+    (TEXT_X + approx_w(name) + SEP + state + BATTERY_INSET).clamp(BT_MIN_W, BT_MAX_W).round()
 }

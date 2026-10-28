@@ -283,7 +283,7 @@ fn draw_chart(ui: &mut Ui, st: &AppState, h: &HealthSnapshot, r: Rect) {
 fn fmt_short(n: u32) -> String {
     if n < 1000 {
         n.to_string()
-    } else if n % 1000 == 0 {
+    } else if n.is_multiple_of(1000) {
         format!("{}k", n / 1000)
     } else {
         format!("{:.1}k", n as f32 / 1000.0)

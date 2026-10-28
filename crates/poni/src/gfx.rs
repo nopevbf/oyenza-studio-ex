@@ -1,4 +1,4 @@
-//! Rendering: Direct2D on the GPU, presented through DirectComposition, with
+﻿//! Rendering: Direct2D on the GPU, presented through DirectComposition, with
 //! a software fallback that pushes a DIB with `UpdateLayeredWindowIndirect`.
 //!
 //! The island window is a fixed-size, per-pixel-alpha layered window that is
@@ -1295,7 +1295,7 @@ impl Gfx {
             let used = std::mem::take(&mut self.used_bitmaps);
             self.bitmaps.retain(|k, _| used.contains(k));
         }
-        if self.frame_no % 120 == 0 || self.layouts.len() > 1500 {
+        if self.frame_no.is_multiple_of(120) || self.layouts.len() > 1500 {
             let keep_after = self.frame_no.saturating_sub(if self.layouts.len() > 1500 { 2 } else { 240 });
             self.layouts.retain(|_, (_, used)| *used >= keep_after);
         }
@@ -2017,12 +2017,12 @@ impl<'a> Canvas<'a> {
         }
     }
 
-    pub fn reset_transform(&mut self) {
-        unsafe { self.g.rt.SetTransform(&Matrix3x2::identity()) };
-    }
+
+
+
 
     /// The current transform (pair with [`Canvas::restore_transform`]
-    /// instead of `reset_transform`, which would also drop outer transforms).
+    /// to preserve and restore outer transforms).
     pub fn save_transform(&self) -> Matrix3x2 {
         let mut m = Matrix3x2::identity();
         unsafe { self.g.rt.GetTransform(&mut m) };

@@ -11,7 +11,7 @@
 ; survive uninstalling (only the cache in %LOCALAPPDATA%\Poni is removed).
 
 #ifndef AppVersion
-  #define AppVersion "0.2.13"
+  #define AppVersion "0.2.14"
 #endif
 #ifndef ExeSource
   #define ExeSource "..\target\release\poni.exe"

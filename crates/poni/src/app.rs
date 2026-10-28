@@ -891,6 +891,7 @@ impl App {
                 Some(LRESULT(0))
             }
             WM_APP_EVENT => {
+                self.refresh_time();
                 while let Ok(ev) = self.rx.try_recv() {
                     self.on_event(ev);
                 }
@@ -1842,8 +1843,8 @@ impl App {
     // ------------------------------------------------------------ events
 
     pub fn on_event(&mut self, ev: AppEvent) {
-        let now = clock::mono();
-        self.st.now = now;
+        self.refresh_time();
+        let now = self.st.now;
         let media_before = matches!(ev, AppEvent::Media(_) | AppEvent::MediaTimeline { .. }).then(|| self.media_snapshot());
         match ev {
             AppEvent::Backdrop => {
@@ -1924,10 +1925,10 @@ impl App {
                     }
                 }
             }
-            AppEvent::Volume { level, muted } => {
+            AppEvent::Volume { level, muted, switched } => {
                 let first = !self.st.volume.known;
                 self.st.volume = crate::state::VolumeState { level, muted, known: true };
-                if !first && self.st.settings.hud_volume {
+                if !first && !switched && !self.st.should_suppress_volume_hud() && self.st.settings.hud_volume {
                     self.st.show_hud(HudKind::Volume { level, muted }, 1.6);
                 }
             }
@@ -1943,9 +1944,30 @@ impl App {
                 }
             }
             AppEvent::Bluetooth { name, connected, battery, audio } => {
-                if self.st.settings.hud_bluetooth {
-                    self.st.show_hud(HudKind::Bluetooth { name, connected, battery, audio }, 2.6);
+                let now = clock::mono();
+                self.st.now = now;
+                if audio && connected {
+                    self.st.bt_audio_suppress_volume_until = now + crate::connectivity::toast::TOAST_DURATION_S;
                 }
+                if self.st.settings.hud_bluetooth {
+                    self.st.show_hud(HudKind::Bluetooth { name: name.clone(), connected, battery, audio }, 2.6);
+                }
+                let ev = crate::connectivity::watcher::build_bluetooth_conn_event(name, connected, battery, audio, now);
+                self.trigger_connectivity_toast(ev);
+            }
+            AppEvent::Wifi { ssid, connected } => {
+                let now = clock::mono();
+                self.st.now = now;
+                if self.st.settings.hud_wifi {
+                    self.st.show_hud(HudKind::Wifi { ssid: ssid.clone(), connected }, 2.6);
+                }
+                let ev = crate::connectivity::watcher::build_wifi_conn_event(ssid, connected, now);
+                self.trigger_connectivity_toast(ev);
+            }
+            AppEvent::Connectivity(ev) => {
+                let now = clock::mono();
+                self.st.now = now;
+                self.trigger_connectivity_toast(ev);
             }
             AppEvent::Fullscreen(on) => {
                 self.fullscreen_on = on;
@@ -2004,7 +2026,7 @@ impl App {
                     self.st.shelf_thumbs.insert(path, image);
                 }
             }
-            AppEvent::Stats(s) => self.st.stats = s,
+
             AppEvent::System(m) => {
                 // A reading still on its way when the page closed is dropped.
                 if self.sysmon_on || self.st.game.active {
@@ -2085,7 +2107,7 @@ impl App {
             AppEvent::Cities { file, got } => pages::prayer::cities_came(&mut self.st, file, got),
             AppEvent::Stocks(ev) => self.st.stocks.apply(ev, self.st.unix),
             AppEvent::AdzanEnded => self.adzan_ended(),
-            AppEvent::Log(s) => pinfo!("{s}"),
+
         }
         if let Some(before) = media_before {
             self.after_media_change(before, now);
@@ -2750,6 +2772,9 @@ impl App {
     }
 
     fn hit_at(&self, p: Point) -> Option<Hit> {
+        if self.mode == Mode::ConnectivityToast {
+            return None;
+        }
         self.hits.iter().rev().find(|h| h.rect.contains(p)).copied()
     }
 
@@ -2757,6 +2782,9 @@ impl App {
     /// whole canvas while expanded (hit margin), only the island collapsed
     /// (floating: its outline and the gap above it, see [`hit_mask_for`]).
     fn hovering_inside(&self, p: Point) -> bool {
+        if self.mode == Mode::ConnectivityToast {
+            return false;
+        }
         if self.expanded {
             return self.island.canvas_rect_at(self.cx).contains(p);
         }
@@ -2880,6 +2908,28 @@ impl App {
         self.st.unix = clock::unix_now();
     }
 
+    fn trigger_connectivity_toast(&mut self, ev: crate::connectivity::model::ConnEvent) {
+        let now = clock::mono();
+        self.st.now = now;
+        if !self.st.connectivity_debouncer.should_emit_event(&ev, now) {
+            return;
+        }
+        if let Some(active) = &mut self.st.connectivity_toast {
+            if !active.is_expired(now) {
+                if active.event.key() == ev.key() {
+                    active.update(ev);
+                    self.request_frame();
+                    return;
+                } else {
+                    self.st.connectivity_queue.push_back(ev);
+                    return;
+                }
+            }
+        }
+        self.st.connectivity_toast = Some(crate::connectivity::toast::ConnectivityToast::new(ev, now));
+        self.request_frame();
+    }
+
     fn tick(&mut self) {
         self.check_recorder_alive();
         let now = self.st.now;
@@ -2891,6 +2941,16 @@ impl App {
         if let Some(n) = &self.st.notice {
             if !self.expanded && now >= n.until {
                 self.st.notice = None;
+            }
+        }
+        if let Some(t) = &self.st.connectivity_toast {
+            if t.is_expired(now) {
+                if let Some(next_ev) = self.st.connectivity_queue.pop_front() {
+                    self.st.connectivity_toast = Some(crate::connectivity::toast::ConnectivityToast::new(next_ev, now));
+                    self.request_frame();
+                } else {
+                    self.st.connectivity_toast = None;
+                }
             }
         }
         // A new version's notice (or "Updated to") waits for the island to be
@@ -3063,7 +3123,7 @@ impl App {
             }
             _ => body,
         };
-        let mut wheel_left = 0.0;
+        let mut wheel_left: f32 = 0.0;
         let draw_from = clock::mono();
         let mut drawn_at = draw_from;
         // Glass: copy the screen under the window while the GPU draws (the
@@ -3176,7 +3236,7 @@ impl App {
                     canvas.pop_shape_mask();
                     canvas.unclip();
                 }
-                drop(canvas);
+
                 if let Err(e) = self.gfx.end() {
                     pwarn!("EndDraw failed: {e}");
                 }
@@ -3368,6 +3428,9 @@ impl App {
         }
         if let Some(n) = &self.st.notice {
             consider(n.until);
+        }
+        if let Some(t) = &self.st.connectivity_toast {
+            consider(t.expires_at());
         }
         // While hidden for a full-screen app only the phase end matters.
         let visible = !self.fullscreen_hidden;
@@ -3780,7 +3843,7 @@ impl App {
                         services::imaging::load_thumb_async(p, self.sink.clone());
                     }
                 }
-                Command::FocusText => self.focus_text(),
+
                 Command::BlurText => self.blur_text(),
                 Command::RecordScreen => services::recorder::record_screen(self.hwnd),
                 Command::Record => {
@@ -3849,7 +3912,7 @@ impl App {
                         u.install_on_next_start(&mut self.st);
                     }
                 }
-                Command::WantStats(b) => self.set_stats(b),
+
                 Command::SetAutostart(on) => {
                     self.st.ui.autostart = Some(on);
                     crate::autostart::report(self.sink.clone(), Some(on));
@@ -4454,6 +4517,37 @@ mod tests {
         let side = SHOULDER + HIT_MARGIN;
         assert_eq!(i.canvas_rect_at(CX), Rect::new(CX - 42.0 - side, 0.0, 84.0 + 2.0 * side, 30.0 + HIT_MARGIN));
         assert_eq!((i.top(), i.side_room(), i.bottom_room()), (0.0, side, HIT_MARGIN));
+    }
+
+    #[test]
+    fn classic_island_at_screen_top_on_startup() {
+        let st = AppState::new(Settings::default(), Store::default());
+        let mode = Mode::Idle;
+        let g = activities::geom(&mode, &st);
+        let i = island(g, pill::on(st.settings.theme));
+        let body = i.body_rect_at(CX);
+        assert_eq!(body.y, 0.0, "Classic island must touch the top of the screen at y = 0.0");
+        assert_eq!(i.top(), 0.0, "Classic island top offset must be 0.0");
+    }
+
+    #[test]
+    fn monitor_top_always_sticks_to_physical_screen_top() {
+        use windows::Win32::Foundation::RECT;
+        let mon_no_bar = crate::window::MonitorInfo {
+            handle: 0,
+            rect: RECT { left: 0, top: 0, right: 1920, bottom: 1080 },
+            work: RECT { left: 0, top: 0, right: 1920, bottom: 1040 },
+            dpi: 96,
+        };
+        assert_eq!(mon_no_bar.top(), 0, "Monitor top must be 0 when taskbar is at bottom");
+
+        let mon_with_top_bar = crate::window::MonitorInfo {
+            handle: 0,
+            rect: RECT { left: 0, top: 0, right: 1920, bottom: 1080 },
+            work: RECT { left: 0, top: 24, right: 1920, bottom: 1080 },
+            dpi: 96,
+        };
+        assert_eq!(mon_with_top_bar.top(), 0, "Monitor top must remain 0 even when another program has an app bar at top");
     }
 
     #[test]

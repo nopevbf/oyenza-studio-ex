@@ -7,7 +7,7 @@ use windows::Win32::Media::Audio::{PlaySoundW, SND_ALIAS, SND_ASYNC, SND_NODEFAU
 pub fn play(s: Sound) {
     let alias = match s {
         Sound::Chime => w!("Notification.Reminder"),
-        Sound::Tick => w!("SystemAsterisk"),
+
     };
     unsafe {
         if !PlaySoundW(alias, None, SND_ALIAS | SND_ASYNC | SND_NODEFAULT).as_bool() {

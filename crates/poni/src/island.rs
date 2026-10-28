@@ -198,6 +198,7 @@ impl Island {
     }
 
     /// Jump straight to `g` without animating.
+    #[allow(dead_code)]
     pub fn snap(&mut self, g: Geom) {
         self.target = g;
         self.w.snap(g.w);

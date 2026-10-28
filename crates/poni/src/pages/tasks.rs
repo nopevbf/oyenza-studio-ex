@@ -65,6 +65,8 @@ struct ListAnim {
     frozen: Option<(Vec<u64>, f64)>,
     /// Tasks removed by delete / "Clear done" and when, for "Undo".
     undo: Option<(Vec<Task>, f64)>,
+    /// Task currently being edited (id, current text buffer).
+    editing: Option<(u64, String)>,
 }
 
 thread_local! {
@@ -114,6 +116,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
         anim.appeared.clear();
         anim.toggled = None;
         anim.frozen = None;
+        anim.editing = None;
     }
     // "Undo" lapses after UNDO_SECS, but never under a press that is about to click it.
     let undo_id = wid("tasks.undo");
@@ -129,14 +132,20 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
     }
     let full = st.store.tasks.tasks.len() >= MAX_TASKS;
 
-    // ---- Input: the list's first row, sharing its checkbox and text columns.
-    let input_r = Rect::new(area.x, area.y, area.w, INPUT_H);
-    let placeholder = if full { "Task list is full" } else { "Add a task, Enter to save" };
+    // ---- Top row: Split into Column 1 (Input task) and Column 2 (Count task).
+    let count_w: f32 = 148.0;
+    let col_gap: f32 = 8.0;
+    let input_w = (area.w - count_w - col_gap).max(120.0);
+    let input_r = Rect::new(area.x, area.y, input_w, INPUT_H);
+    let placeholder = if full { "Task list is full" } else { "Add a task, Enter" };
     let accent = st.accent;
     let resp = ui.text_input_row(wid("tasks.input"), input_r, &mut st.ui.task_input, placeholder, MAX_TASK_LEN, accent, Some(Icon::Plus));
     if resp.submitted {
         submit(ui, st, &mut anim, day_start);
     }
+
+    let count_r = Rect::new(input_r.right() + col_gap, area.y, count_w, INPUT_H);
+    draw_counter_badge(ui, st, count_r, day_start);
 
     // ---- List.
     let view = Rect::new(area.x, area.y + LIST_TOP, area.w, LIST_H);
@@ -174,7 +183,11 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
 
         let mut toggle = None;
         let mut delete = None;
+        let mut start_edit = None;
+        let mut commit_edit = None;
+        let mut cancel_edit = false;
         let mut rows = HashMap::with_capacity(items.len());
+        let mut editing_pair = anim.editing.take();
         ui.c.clip(view);
         for (i, (id, (done, text))) in items.iter().enumerate() {
             let target = i as f32 * ROW_H;
@@ -204,15 +217,20 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
             ui.c.set_alpha(prev_alpha * appear);
             // A row on the move glides between pixels; at rest it sits on whole pixels.
             let snap_was = ui.c.set_text_snap(!(scrolling || m || appear < 1.0));
-            let action = draw_row(ui, row, hit, view, *id, *done, text, pop);
+            let is_editing = editing_pair.as_mut().filter(|(eid, _)| *eid == *id).map(|(_, buf)| buf);
+            let action = draw_row(ui, row, hit, view, *id, *done, text, pop, is_editing, accent);
             ui.c.set_text_snap(snap_was);
             ui.c.set_alpha(prev_alpha);
             match action {
                 RowAction::Toggle => toggle = Some(*id),
                 RowAction::Delete => delete = Some(*id),
+                RowAction::StartEdit => start_edit = Some((*id, text.clone())),
+                RowAction::CommitEdit(new_text) => commit_edit = Some((*id, new_text)),
+                RowAction::CancelEdit => cancel_edit = true,
                 RowAction::None => {}
             }
         }
+        anim.editing = editing_pair;
         // Fade content out at edges that can scroll further.
         if anim.scroll > 0.5 {
             fade(ui, Rect::new(view.x, view.y, view.w, FADE), true);
@@ -222,6 +240,23 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
         }
         ui.c.unclip();
         anim.rows = rows;
+
+        if let Some((id, text)) = start_edit {
+            anim.editing = Some((id, text));
+            ui.input.focused = Some(wid_n("tasks.edit", id));
+            ui.request_focus(true);
+        }
+        if let Some((id, new_text)) = commit_edit {
+            if !new_text.trim().is_empty() {
+                if st.store.tasks.edit(id, &new_text) {
+                    st.save();
+                }
+            }
+            anim.editing = None;
+        }
+        if cancel_edit {
+            anim.editing = None;
+        }
 
         if let Some(id) = toggle {
             if st.store.tasks.toggle(id, st.unix) {
@@ -334,11 +369,36 @@ enum RowAction {
     None,
     Toggle,
     Delete,
+    StartEdit,
+    CommitEdit(String),
+    CancelEdit,
 }
 
 /// One task row. `hit` is the part of `row` inside the list viewport `view`.
 #[allow(clippy::too_many_arguments)]
-fn draw_row(ui: &mut Ui, row: Rect, hit: Rect, view: Rect, id: u64, done: bool, text: &str, pop: Option<f32>) -> RowAction {
+fn draw_row(ui: &mut Ui, row: Rect, hit: Rect, view: Rect, id: u64, done: bool, text: &str, pop: Option<f32>, editing: Option<&mut String>, accent: Color) -> RowAction {
+    let cy = row.center().y;
+
+    if let Some(buf) = editing {
+        // Active inline edit mode for this row
+        let c = Point::new(row.x + MARK_X, cy);
+        let icon_r = Rect::from_center(c, 18.0, 18.0);
+        ui.c.icon(Icon::Circle, icon_r, palette::TEXT_FAINT);
+
+        let input_r = Rect::new(row.x, row.y, (row.w - 36.0).max(0.0), row.h);
+        let resp = ui.text_input_row(wid_n("tasks.edit", id), input_r, buf, "Task", MAX_TASK_LEN, accent, None);
+
+        let save_btn = Rect::new(row.right() - 32.0, cy - 13.0, 26.0, 26.0);
+        let save_col = if ui.hovered(save_btn) { palette::GREEN } else { palette::TEXT_DIM };
+        if ui.icon_button(wid_n("tasks.save", id), save_btn, Icon::Check, save_col, 14.0).clicked || resp.submitted {
+            return RowAction::CommitEdit(buf.clone());
+        }
+        if resp.cancelled {
+            return RowAction::CancelEdit;
+        }
+        return RowAction::None;
+    }
+
     let mut action = RowAction::None;
     let resp = ui.button(wid_n("tasks.row", id), hit);
     if resp.pressed {
@@ -349,7 +409,6 @@ fn draw_row(ui: &mut Ui, row: Rect, hit: Rect, view: Rect, id: u64, done: bool, 
     if resp.clicked {
         action = RowAction::Toggle;
     }
-    let cy = row.center().y;
 
     // Checkbox (pops when toggled).
     let scale = pop.map(|t| 1.0 + 0.22 * (t * std::f32::consts::PI).sin()).unwrap_or(1.0);
@@ -365,7 +424,7 @@ fn draw_row(ui: &mut Ui, row: Rect, hit: Rect, view: Rect, id: u64, done: bool, 
 
     // Text, struck through when done (the line sweeps in right after checking).
     let tx = row.x + TEXT_X;
-    let tw = (row.w - TEXT_X - 40.0).max(0.0);
+    let tw = (row.w - TEXT_X - 65.0).max(0.0);
     let style = TextStyle::body().color(if done { palette::TEXT_FAINT } else { palette::TEXT });
     ui.c.text(text, Rect::new(tx, row.y, tw, row.h), &style);
     if done && tw > 0.0 {
@@ -377,9 +436,15 @@ fn draw_row(ui: &mut Ui, row: Rect, hit: Rect, view: Rect, id: u64, done: bool, 
         }
     }
 
-    // Delete, only while hovering a fully visible row.
+    // Edit and Delete, only while hovering a fully visible row.
     let del = Rect::new(row.right() - 32.0, cy - 13.0, 26.0, 26.0);
     if resp.hovered && del.y >= view.y && del.bottom() <= view.bottom() {
+        let edit_btn = Rect::new(row.right() - 58.0, cy - 13.0, 24.0, 26.0);
+        let edit_col = if ui.hovered(edit_btn) { palette::TEXT } else { palette::TEXT_DIM };
+        if ui.icon_button(wid_n("tasks.edit_btn", id), edit_btn, Icon::Edit, edit_col, 13.0).clicked {
+            action = RowAction::StartEdit;
+        }
+
         let color = if ui.hovered(del) { palette::RED } else { palette::TEXT_DIM };
         if ui.icon_button(wid_n("tasks.del", id), del, Icon::Trash, color, 14.0).clicked {
             action = RowAction::Delete;
@@ -516,4 +581,18 @@ pub fn next_wake(_st: &AppState) -> Option<f64> {
             (x, y) => x.or(y),
         }
     })
+}
+
+/// Draw the second column: "4/5 Task done today" with a mini progress ring.
+fn draw_counter_badge(ui: &mut Ui, st: &AppState, r: Rect, day_start: i64) {
+    let (done, total) = st.store.tasks.today_progress(day_start);
+    let frac = if total > 0 { done as f32 / total as f32 } else { 0.0 };
+    ui.c.fill_rrect(r, 9.0, palette::SURFACE);
+    let cy = r.center().y;
+    let ring_c = Point::new(r.x + 16.0, cy);
+    ui.c.ring(ring_c, 6.0, 2.0, frac, RING_TRACK, palette::GREEN);
+    let text = format!("{done}/{total} Task done today");
+    let color = if total > 0 && done == total { palette::GREEN } else { palette::TEXT_DIM };
+    let text_r = Rect::new(r.x + 28.0, r.y, (r.w - 32.0).max(0.0), r.h);
+    ui.c.text(&text, text_r, &TextStyle::footnote().color(color));
 }

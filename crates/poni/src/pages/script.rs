@@ -289,7 +289,7 @@ fn draw_reading(ui: &mut Ui, st: &mut AppState, area: Rect, cache: &mut Cache) {
         if alpha <= 0.01 {
             continue;
         }
-        ui.c.text(&lines[i].text, Rect::new(view.x, y, view.w, READ_SIZE * LEADING + 2.0), &style.clone().color(Color::white(alpha)));
+        ui.c.text(&lines[i].text, Rect::new(view.x, y, view.w, READ_SIZE * LEADING + 2.0), &style.color(Color::white(alpha)));
     }
     ui.c.set_text_snap(snap_was);
     ui.c.unclip();

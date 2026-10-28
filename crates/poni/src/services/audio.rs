@@ -23,8 +23,15 @@ use windows::Win32::Media::Audio::{
     eConsole, eMultimedia, eRender, EDataFlow, ERole, IMMDevice, IMMDeviceEnumerator, IMMNotificationClient, IMMNotificationClient_Impl,
     MMDeviceEnumerator, AUDCLNT_E_DEVICE_INVALIDATED, AUDIO_VOLUME_NOTIFICATION_DATA, DEVICE_STATE,
 };
-use windows::Win32::System::Com::{CoCreateInstance, CoInitializeEx, CoTaskMemFree, CoUninitialize, CLSCTX_ALL, COINIT_MULTITHREADED};
+use windows::Win32::System::Com::{CoCreateInstance, CoInitializeEx, CoTaskMemFree, CoUninitialize, CLSCTX_ALL, COINIT_MULTITHREADED, STGM_READ};
+use windows::Win32::UI::Shell::PropertiesSystem::IPropertyStore;
 use windows::Win32::UI::Shell::PropertiesSystem::PROPERTYKEY;
+
+/// DEVPKEY_Device_FriendlyName ({A45C254E-DF1C-4EFD-8020-67D146A850E0}, 14)
+const PKEY_DEVICE_FRIENDLY_NAME: PROPERTYKEY = PROPERTYKEY {
+    fmtid: windows::core::GUID::from_u128(0xa45c254e_df1c_4efd_8020_67d146a850e0),
+    pid: 14,
+};
 
 /// How long `Drop` waits for the worker to unregister before detaching it.
 const STOP_TIMEOUT: Duration = Duration::from_millis(800);
@@ -105,7 +112,7 @@ impl Gate {
     /// repeats the last report. Cheap: one lock, no allocation on the
     /// duplicate path. Holding the lock while sending keeps reports ordered
     /// with respect to re-binds.
-    fn publish(&self, generation: u32, level: f32, muted: bool) {
+    fn publish(&self, generation: u32, level: f32, muted: bool, switched: bool) {
         let level = if level.is_finite() { level.clamp(0.0, 1.0) } else { 0.0 };
         let key = ((level * 10_000.0).round() as u32, muted);
         let mut s = self.lock();
@@ -113,7 +120,7 @@ impl Gate {
             return;
         }
         s.last = Some(key);
-        self.sink.send(AppEvent::Volume { level, muted });
+        self.sink.send(AppEvent::Volume { level, muted, switched });
     }
 }
 
@@ -131,7 +138,7 @@ impl IAudioEndpointVolumeCallback_Impl for VolumeCallback_Impl {
         // SAFETY: Core Audio passes either null or a struct that is valid for
         // the duration of this call; we only read two fields.
         if let Some(data) = unsafe { pnotify.as_ref() } {
-            self.gate.publish(self.generation, data.fMasterVolume, data.bMuted.as_bool());
+            self.gate.publish(self.generation, data.fMasterVolume, data.bMuted.as_bool(), false);
         }
         Ok(())
     }
@@ -290,6 +297,8 @@ fn rebind(enumerator: &IMMDeviceEnumerator, gate: &Arc<Gate>, current: Option<Bi
         }
     };
     let id = device_id(&device);
+    let name = device_name(&device);
+
     if let Some(b) = &current {
         // Same endpoint (a per-role repeat of one switch) and still alive. A
         // quick unplug + replug keeps the id but invalidates the old object,
@@ -297,6 +306,18 @@ fn rebind(enumerator: &IMMDeviceEnumerator, gate: &Arc<Gate>, current: Option<Bi
         if !id.is_empty() && b.id == id && unsafe { b.volume.GetMasterVolumeLevelScalar() }.is_ok() {
             return current;
         }
+    }
+
+    let is_switch = current.is_some();
+    if is_switch && crate::connectivity::watcher::is_bluetooth_audio_endpoint(&id, &name) {
+        let dev_name = if name.is_empty() { "Bluetooth Audio".to_string() } else { name };
+        crate::pinfo!("audio: switched default endpoint to bluetooth device: {dev_name}");
+        gate.sink.send(AppEvent::Bluetooth {
+            name: dev_name,
+            connected: true,
+            battery: None,
+            audio: true,
+        });
     }
 
     // A new generation silences the old endpoint's late callbacks.
@@ -307,7 +328,7 @@ fn rebind(enumerator: &IMMDeviceEnumerator, gate: &Arc<Gate>, current: Option<Bi
     match bind(&device, id, gate, generation) {
         Ok(b) => {
             match unsafe { (b.volume.GetMasterVolumeLevelScalar(), b.volume.GetMute()) } {
-                (Ok(level), Ok(muted)) => gate.publish(generation, level, muted.as_bool()),
+                (Ok(level), Ok(muted)) => gate.publish(generation, level, muted.as_bool(), true),
                 (Err(e), _) | (_, Err(e)) => crate::pwarn!("audio: reading the volume failed ({e})"),
             }
             Some(b)
@@ -324,6 +345,20 @@ fn bind(device: &IMMDevice, id: String, gate: &Arc<Gate>, generation: u32) -> Re
     let callback: IAudioEndpointVolumeCallback = VolumeCallback { gate: Arc::clone(gate), generation }.into();
     unsafe { volume.RegisterControlChangeNotify(&callback)? };
     Ok(Binding { id, volume, callback })
+}
+
+/// Read the user-facing friendly name of the audio endpoint from its property store.
+fn device_name(device: &IMMDevice) -> String {
+    unsafe {
+        let store: IPropertyStore = match device.OpenPropertyStore(STGM_READ) {
+            Ok(s) => s,
+            Err(_) => return String::new(),
+        };
+        match store.GetValue(&PKEY_DEVICE_FRIENDLY_NAME) {
+            Ok(pv) => pv.to_string().trim().to_string(),
+            Err(_) => String::new(),
+        }
+    }
 }
 
 /// The endpoint id string ("" if it cannot be read).

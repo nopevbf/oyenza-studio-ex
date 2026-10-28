@@ -22,6 +22,7 @@ impl Head {
     }
 
     /// `Content-Length`, or 0 when absent. `Err` for a malformed value.
+    #[allow(clippy::result_unit_err)]
     pub fn content_length(&self) -> Result<u64, ()> {
         match self.header("content-length") {
             None => Ok(0),

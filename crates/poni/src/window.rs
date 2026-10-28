@@ -1,4 +1,4 @@
-//! Window creation, monitor selection and the vsync frame clock.
+﻿//! Window creation, monitor selection and the vsync frame clock.
 
 use crate::clock;
 use crate::events::{SendHwnd, WM_APP_FRAME};
@@ -161,7 +161,7 @@ thread_local! {
 /// The visual window, if the GPU renderer made one.
 fn visual() -> Option<HWND> {
     let v = VISUAL.with(|v| v.get());
-    (v != 0).then(|| HWND(v as *mut core::ffi::c_void))
+    (v != 0).then_some(HWND(v as *mut core::ffi::c_void))
 }
 
 /// Leave the island out of screenshots, screen recordings and screen sharing
@@ -190,7 +190,7 @@ pub fn capture_excluded(hwnd: HWND) -> bool {
         let mut got = 0u32;
         unsafe { GetWindowDisplayAffinity(h, &mut got).is_ok() && got == WDA_EXCLUDEFROMCAPTURE.0 }
     };
-    excluded(hwnd) && visual().map_or(true, excluded)
+    excluded(hwnd) && visual().is_none_or(excluded)
 }
 
 /// Tell Windows (see [`exclude_from_capture`]), for the island and its visual
@@ -206,7 +206,7 @@ fn set_capture_excluded(hwnd: HWND, on: bool) -> bool {
     };
     // Both, even when the first refuses.
     let island = set(hwnd);
-    visual().map_or(true, set) && island
+    visual().is_none_or(set) && island
 }
 
 /// Windows' build number (19041 = Windows 10 version 2004, the first that can
@@ -253,19 +253,9 @@ pub struct MonitorInfo {
 }
 
 impl MonitorInfo {
-    pub fn scale(&self) -> f32 {
-        self.dpi as f32 / 96.0
-    }
-    /// Y where the island hangs from: below a top-docked taskbar, else the monitor top.
+    /// Y where the island hangs from: the physical top edge of the monitor screen.
     pub fn top(&self) -> i32 {
-        if self.work.top > self.rect.top && self.work.left <= self.rect.left && self.work.right >= self.rect.right {
-            self.work.top
-        } else {
-            self.rect.top
-        }
-    }
-    pub fn center_x(&self) -> i32 {
-        (self.rect.left + self.rect.right) / 2
+        self.rect.top
     }
 }
 

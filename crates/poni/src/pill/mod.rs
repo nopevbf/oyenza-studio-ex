@@ -55,6 +55,10 @@ pub fn geom(m: &Mode, st: &AppState) -> Option<Geom> {
         Mode::Activity(a) => live::geom(*a, st),
         Mode::Hud(t) => hud::geom(*t, st),
         Mode::Notice => notice::geom(st),
+        Mode::ConnectivityToast => {
+            let w = st.connectivity_toast.as_ref().map_or(crate::connectivity::toast::TOAST_B_W, |t| t.width());
+            Some(crate::island::Geom::new(w, crate::connectivity::toast::TOAST_H, crate::connectivity::toast::TOAST_RADIUS))
+        }
         Mode::Expanded(p) => expanded::geom(*p, st),
         // Classic's invisible strip, as for the Hidden idle look.
         Mode::Aside => None,
@@ -72,6 +76,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, m: &Mode, body: Rect) -> bool {
         Mode::Activity(a) => live::draw(ui, st, *a, body),
         Mode::Hud(t) => hud::draw(ui, st, *t, body),
         Mode::Notice => notice::draw(ui, st, body),
+        Mode::ConnectivityToast => false,
         Mode::Expanded(_) | Mode::Aside => false,
     }
 }

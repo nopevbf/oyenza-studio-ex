@@ -120,6 +120,7 @@ pub enum HudKind {
     Charging { percent: u8, plugged: bool },
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },
     LowBattery { percent: u8 },
+    Wifi { ssid: String, connected: bool },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -594,6 +595,10 @@ pub struct AppState {
     pub volume: VolumeState,
     pub power: PowerState,
     pub hud: Option<Hud>,
+    pub bt_audio_suppress_volume_until: f64,
+    pub connectivity_toast: Option<crate::connectivity::toast::ConnectivityToast>,
+    pub connectivity_queue: std::collections::VecDeque<crate::connectivity::model::ConnEvent>,
+    pub connectivity_debouncer: crate::connectivity::model::Debouncer,
     pub notice: Option<Notice>,
     pub stats: SysStats,
     /// The System page's readings and their last minute (empty while it's closed).
@@ -690,6 +695,10 @@ impl AppState {
             volume: VolumeState::default(),
             power: PowerState::default(),
             hud: None,
+            bt_audio_suppress_volume_until: 0.0,
+            connectivity_toast: None,
+            connectivity_queue: std::collections::VecDeque::new(),
+            connectivity_debouncer: crate::connectivity::model::Debouncer::new(2.5),
             notice: None,
             stats: SysStats::default(),
             system: poni_core::sysmon::Monitor::default(),
@@ -882,6 +891,17 @@ impl AppState {
         self.hud = Some(Hud { kind, until: self.now + secs });
     }
 
+    /// Whether a Bluetooth HUD is currently on screen.
+    pub fn is_bluetooth_hud_active(&self) -> bool {
+        matches!(self.hud.as_ref().map(|h| &h.kind), Some(HudKind::Bluetooth { .. }))
+            && self.now < self.hud.as_ref().map_or(0.0, |h| h.until)
+    }
+
+    /// Whether volume pop-ups should be suppressed (e.g. during Bluetooth sound connection).
+    pub fn should_suppress_volume_hud(&self) -> bool {
+        self.is_bluetooth_hud_active() || self.now < self.bt_audio_suppress_volume_until
+    }
+
     pub fn day_key(&self) -> String {
         self.local.day_key()
     }
@@ -980,5 +1000,36 @@ mod tests {
         // The island on screen: it shows at once.
         st.show_or_hold(notice("now"), false);
         assert_eq!(st.notice.as_ref().map(|n| n.title.as_str()), Some("now"));
+    }
+
+    #[test]
+    fn bt_audio_connection_suppresses_volume_hud() {
+        let mut st = AppState::new(Settings::default(), Store::default());
+        st.now = 100.0;
+        // Initially, volume is not suppressed
+        assert!(!st.should_suppress_volume_hud());
+
+        // When Bluetooth audio connects, a 2.6s suppression window is set
+        st.bt_audio_suppress_volume_until = st.now + 2.6;
+        assert!(st.should_suppress_volume_hud(), "suppressed during connection window");
+
+        // After the window expires, it is no longer suppressed
+        st.now = 102.7;
+        assert!(!st.should_suppress_volume_hud(), "window expired");
+
+        // When a Bluetooth HUD is actively shown, volume is also suppressed
+        st.show_hud(HudKind::Bluetooth {
+            name: "AirBuds Pro".into(),
+            connected: true,
+            battery: Some(85),
+            audio: true,
+        }, 2.6);
+        assert!(st.is_bluetooth_hud_active());
+        assert!(st.should_suppress_volume_hud(), "suppressed while Bluetooth HUD is on screen");
+
+        // When Bluetooth HUD expires, suppression ceases
+        st.now = 106.0;
+        assert!(!st.is_bluetooth_hud_active());
+        assert!(!st.should_suppress_volume_hud());
     }
 }

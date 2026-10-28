@@ -5,7 +5,7 @@
 //! resolved against the previous frame's hits, so a click shows up as
 //! `clicked == true` on the next frame (the app always repaints after input).
 
-use crate::gfx::{Align, Canvas, TextStyle, Weight};
+use crate::gfx::{Canvas, TextStyle, Weight};
 use crate::icons::Icon;
 use poni_core::geom::{palette, Color, Point, Rect};
 
@@ -45,8 +45,8 @@ pub enum KeyInput {
     Down,
     Home,
     End,
-    /// Ctrl+V (paste from clipboard; the app supplies the text as chars).
-    SelectAll,
+
+
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -133,7 +133,6 @@ pub struct TextInputResp {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum InputLook {
-    Box,
     Row { accent: Color, icon: Option<Icon> },
 }
 
@@ -145,7 +144,7 @@ pub const PILL_GAP: f32 = 8.0;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PillStyle {
-    /// Secondary utility (Clear, Undo, …): neutral fill, dim label that brightens on hover.
+    /// Secondary utility (Clear, Undo, â€¦): neutral fill, dim label that brightens on hover.
     Utility,
     /// A page action: neutral fill, full-white label.
     Neutral,
@@ -205,6 +204,10 @@ impl<'a, 'g> Ui<'a, 'g> {
         self.wants_focus
     }
 
+    pub fn request_focus(&mut self, want: bool) {
+        self.wants_focus = Some(want);
+    }
+
     pub fn hovered(&self, r: Rect) -> bool {
         self.input.mouse.is_some_and(|m| r.contains(m))
     }
@@ -251,33 +254,6 @@ impl<'a, 'g> Ui<'a, 'g> {
         let ir = Rect::from_center(r.center(), icon_size, icon_size);
         let col = if resp.pressed { color.mul_alpha(0.8) } else { color };
         self.c.icon(icon, ir, col);
-        resp
-    }
-
-    /// Filled capsule button with an optional leading icon.
-    pub fn pill_button(&mut self, id: WidgetId, r: Rect, label: &str, icon: Option<Icon>, fill: Color, text: Color) -> Resp {
-        let resp = self.button(id, r);
-        let f = if resp.pressed {
-            Color::lerp(fill, Color::white(1.0), 0.18)
-        } else if resp.hovered {
-            Color::lerp(fill, Color::white(1.0), 0.1)
-        } else {
-            fill
-        };
-        self.c.fill_rrect(r, r.h / 2.0, f);
-        let st = TextStyle::new(12.5).weight(Weight::Semibold).color(text).center();
-        match icon {
-            Some(i) => {
-                let (tw, _) = self.c.measure(label, &st, r.w);
-                let total = 14.0 + if label.is_empty() { 0.0 } else { 5.0 + tw };
-                let x = r.x + (r.w - total) / 2.0;
-                self.c.icon(i, Rect::new(x, r.center().y - 7.0, 14.0, 14.0), text);
-                if !label.is_empty() {
-                    self.c.text(label, Rect::new(x + 19.0, r.y, tw + 2.0, r.h), &st.align(Align::Left));
-                }
-            }
-            None => self.c.text(label, r, &st),
-        }
         resp
     }
 
@@ -360,11 +336,6 @@ impl<'a, 'g> Ui<'a, 'g> {
         }
     }
 
-    /// Single-line text field. Click to focus, Enter submits, Esc cancels.
-    pub fn text_input(&mut self, id: WidgetId, r: Rect, buf: &mut String, placeholder: &str, max_chars: usize) -> TextInputResp {
-        self.text_input_styled(id, r, buf, placeholder, max_chars, InputLook::Box)
-    }
-
     /// A list-row style field: no box until hovered/focused, a leading icon in
     /// the same column as list checkboxes (centred at x+18, text at x+36), and
     /// an accent focus ring.
@@ -407,7 +378,7 @@ impl<'a, 'g> Ui<'a, 'g> {
                     KeyInput::Left => caret = caret.saturating_sub(1),
                     KeyInput::Right => caret = (caret + 1).min(chars.len()),
                     KeyInput::Home => caret = 0,
-                    KeyInput::End | KeyInput::SelectAll => caret = chars.len(),
+                    KeyInput::End => caret = chars.len(),
                     KeyInput::Enter => out.submitted = true,
                     KeyInput::Escape => {
                         out.cancelled = true;
@@ -427,14 +398,6 @@ impl<'a, 'g> Ui<'a, 'g> {
         }
         // Draw.
         let inner = match look {
-            InputLook::Box => {
-                let bg = if focused { Color::white(0.13) } else if resp.hovered { Color::white(0.1) } else { palette::SURFACE };
-                self.c.fill_rrect(r, 9.0, bg);
-                if focused {
-                    self.c.stroke_rrect(r, 9.0, Color::white(0.28), 1.0);
-                }
-                r.inset(10.0, 0.0)
-            }
             InputLook::Row { accent, icon } => {
                 if focused || resp.hovered {
                     self.c.fill_rrect(r, 9.0, if focused { Color::white(0.10) } else { palette::SURFACE });

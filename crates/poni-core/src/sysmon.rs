@@ -471,7 +471,7 @@ const CORE_RECORD: usize = 48;
 
 /// Read a `SystemProcessorPerformanceInformation` buffer, one entry per logical processor.
 pub fn parse_core_times(buf: &[u8]) -> Vec<CoreTimes> {
-    buf.chunks_exact(CORE_RECORD)
+    buf.as_chunks::<CORE_RECORD>().0.iter()
         .map(|r| CoreTimes { idle: read_u64(r, 0), kernel: read_u64(r, 8), user: read_u64(r, 16), dpc: read_u64(r, 24), interrupt: read_u64(r, 32) })
         .collect()
 }
@@ -756,7 +756,7 @@ fn read_u64(b: &[u8], at: usize) -> u64 {
 }
 
 fn utf16le(b: &[u8]) -> String {
-    let units: Vec<u16> = b.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+    let units: Vec<u16> = b.as_chunks::<2>().0.iter().map(|&[b0, b1]| u16::from_le_bytes([b0, b1])).collect();
     String::from_utf16_lossy(&units)
 }
 

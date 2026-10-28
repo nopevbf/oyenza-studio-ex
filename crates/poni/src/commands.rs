@@ -1,4 +1,4 @@
-//! Side effects requested by pages; executed by the app after each frame.
+﻿//! Side effects requested by pages; executed by the app after each frame.
 
 use crate::pages::PageKind;
 
@@ -18,8 +18,8 @@ pub enum MediaCmd {
 pub enum Sound {
     /// Gentle chime (timer finished, reminder).
     Chime,
-    /// Short tick (button feedback) — currently unused.
-    Tick,
+
+
 }
 
 /// Phone drop (the Shelf's phone panel).
@@ -79,7 +79,7 @@ pub enum Command {
     /// Request a thumbnail for a shelf item (async; arrives as `AppEvent::ShelfThumb`).
     LoadThumb(String),
     /// Give the island keyboard focus for a text field.
-    FocusText,
+
     /// The Script page's Paste: the clipboard's text, line breaks kept,
     /// becomes the script.
     ScriptPaste,
@@ -115,7 +115,7 @@ pub enum Command {
     /// for updates… does (`AppState::update.said` takes the answer).
     CheckForUpdates,
     /// Start/stop the 1 Hz system-stats sampler.
-    WantStats(bool),
+
     /// Start with Windows on or off (the Settings page's switch).
     SetAutostart(bool),
     /// Open the System page on this module (a Today ring was clicked).

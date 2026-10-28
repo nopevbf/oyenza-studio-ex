@@ -1,4 +1,4 @@
-//! Vector icons drawn on a 24×24 grid as SVG path data (original artwork).
+﻿//! Vector icons drawn on a 24Ã—24 grid as SVG path data (original artwork).
 //!
 //! Stroked parts use a 2-unit round-capped stroke; filled parts are solid.
 //! Geometry is parsed once and cached by [`crate::gfx::Gfx`].
@@ -25,7 +25,7 @@ pub enum Icon {
     Minus,
     Close,
     Clipboard,
-    Copy,
+
     Calendar,
     Clock,
     Cpu,
@@ -44,6 +44,7 @@ pub enum Icon {
     File,
     Trash,
     Undo,
+    Edit,
     Reset,
     Sliders,
     Open,
@@ -95,6 +96,15 @@ pub enum Icon {
     /// The Record page's inputs (system sound is `Volume`).
     Camera,
     Mic,
+    /// Wi-Fi connection indicator.
+    Wifi,
+    Earbuds,
+    Speaker,
+    Keyboard,
+    Mouse,
+    Gamepad,
+    Ethernet,
+    WifiOff,
 }
 
 pub struct Part {
@@ -181,10 +191,6 @@ pub fn parts(icon: Icon) -> &'static [Part] {
             s("M9 3.5h6a1 1 0 0 1 1 1V6a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"),
             s("M16 5h1.5A1.5 1.5 0 0 1 19 6.5v13a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5v-13A1.5 1.5 0 0 1 6.5 5H8"),
         ],
-        Copy => p![
-            s("M9.5 8.5h9A1.5 1.5 0 0 1 20 10v9.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 8 19.5V10a1.5 1.5 0 0 1 1.5-1.5z"),
-            s("M16 8.5v-3A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5V15a1.5 1.5 0 0 0 1.5 1.5H8"),
-        ],
         Calendar => p![
             s("M5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-12A1.5 1.5 0 0 1 5.5 5z"),
             s("M4 10h16"),
@@ -228,6 +234,10 @@ pub fn parts(icon: Icon) -> &'static [Part] {
             s("M6.5 7l.9 12a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4L17.5 7"),
         ],
         Undo => p![s("M9 14L4.5 9.5 9 5"), s("M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3")],
+        Edit => p![
+            s("M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"),
+            s("M15 5l4 4"),
+        ],
         Reset => p![s("M4 12a8 8 0 1 0 2.4-5.7"), s("M4 4v4.5h4.5")],
         Sliders => p![
             s("M4 6h10M18 6h2M16 4v4"),
@@ -294,6 +304,47 @@ pub fn parts(icon: Icon) -> &'static [Part] {
         Download => p![s("M12 4v10.5"), s("M7.5 10L12 14.5 16.5 10"), s("M4.5 16v2.5A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5V16")],
         Stocks => p![s("M3.5 17.5l5.5-5.5 4 4 7.5-7.5"), s("M15 8.5h5.5V14")],
         Search => p![s("M4.5 10.5a6 6 0 1 0 12 0a6 6 0 1 0-12 0"), s("M15 15l4.5 4.5")],
+        Wifi => p![
+            f("M10.5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0"),
+            s("M8.5 15.5a5 5 0 0 1 7 0"),
+            s("M5 12a10 10 0 0 1 14 0"),
+            s("M1.5 8.5a15 15 0 0 1 21 0"),
+        ],
+        Earbuds => p![
+            s("M6 10a3 3 0 1 1 5-2.2V16a1.5 1.5 0 0 1-3 0V11"),
+            s("M18 10a3 3 0 1 0-5-2.2V16a1.5 1.5 0 0 0 3 0V11"),
+        ],
+        Speaker => p![
+            s("M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"),
+            s("M12 11a3 3 0 1 0 0 6a3 3 0 0 0 0-6z"),
+            s("M12 7h.01"),
+        ],
+        Keyboard => p![
+            s("M3 6h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"),
+            s("M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"),
+        ],
+        Mouse => p![
+            s("M7 4h10a4 4 0 0 1 4 4v8a7 7 0 0 1-7 7h-4a7 7 0 0 1-7-7V8a4 4 0 0 1 4-4z"),
+            s("M12 4v6"),
+        ],
+        Gamepad => p![
+            s("M4.5 9h15a3.5 3.5 0 0 1 3.4 4.3l-1.5 6A2.5 2.5 0 0 1 19 21h-2a2 2 0 0 1-1.8-1.1L13.8 17H10.2l-1.4 2.9A2 2 0 0 1 7 21H5a2.5 2.5 0 0 1-2.4-1.7l-1.5-6A3.5 3.5 0 0 1 4.5 9z"),
+            s("M6.5 13h3M8 11.5v3"),
+            s("M16 12h.01M18 14h.01"),
+        ],
+        Ethernet => p![
+            s("M4 5h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-4v2h-8v-2H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"),
+            s("M8 9v4M12 9v4M16 9v4"),
+        ],
+        WifiOff => p![
+            f("M10.5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0"),
+            s("M8.5 15.5a5 5 0 0 1 7 0"),
+            s("M5 12a10 10 0 0 1 4-1.7"),
+            s("M15 10.3a10 10 0 0 1 4 1.7"),
+            s("M1.5 8.5a15 15 0 0 1 6.5-2.8"),
+            s("M16 5.7a15 15 0 0 1 6.5 2.8"),
+            s("M2 2l20 20"),
+        ],
     }
 }
 
@@ -304,14 +355,15 @@ mod tests {
     const ALL: &[Icon] = &[
         Icon::Play, Icon::Pause, Icon::Next, Icon::Prev, Icon::Music, Icon::Lyrics, Icon::Timer, Icon::Coffee, Icon::Steps,
         Icon::Tray, Icon::ListChecks, Icon::Check, Icon::CheckCircle, Icon::Circle, Icon::Plus, Icon::Minus,
-        Icon::Close, Icon::Clipboard, Icon::Copy, Icon::Calendar, Icon::Clock, Icon::Cpu, Icon::Memory, Icon::Disk,
+        Icon::Close, Icon::Clipboard, Icon::Calendar, Icon::Clock, Icon::Cpu, Icon::Memory, Icon::Disk,
         Icon::Battery, Icon::Bolt, Icon::Bluetooth, Icon::Headphones, Icon::Volume, Icon::VolumeLow, Icon::VolumeMute,
-        Icon::Pin, Icon::PinFill, Icon::Folder, Icon::File, Icon::Trash, Icon::Undo, Icon::Reset,
+        Icon::Pin, Icon::PinFill, Icon::Folder, Icon::File, Icon::Trash, Icon::Undo, Icon::Edit, Icon::Reset,
         Icon::Sliders, Icon::Open, Icon::Phone, Icon::Eye, Icon::MoneyIn, Icon::MoneyOut, Icon::Transfer, Icon::Card, Icon::Wallet,
         Icon::Unlink, Icon::Gear,
         Icon::Gauge, Icon::App, Icon::Windows, Icon::Addons, Icon::Moon, Icon::Stop, Icon::Script, Icon::Record, Icon::Download,
         Icon::Stocks, Icon::Search,
-        Icon::Recorder, Icon::Screen, Icon::AppWindow, Icon::Area, Icon::Camera, Icon::Mic,
+        Icon::Recorder, Icon::Screen, Icon::AppWindow, Icon::Area, Icon::Camera, Icon::Mic, Icon::Wifi,
+        Icon::Earbuds, Icon::Speaker, Icon::Keyboard, Icon::Mouse, Icon::Gamepad, Icon::Ethernet, Icon::WifiOff,
     ];
 
     #[test]

@@ -72,11 +72,11 @@ impl RingTween {
     const fn new() -> Self {
         Self {
             last_draw: f64::NEG_INFINITY,
-            last_target: 0.0,
+            last_target: 1.0,
             last_color: palette::ORANGE,
-            shown: 0.0,
+            shown: 1.0,
             shown_color: palette::ORANGE,
-            from: 0.0,
+            from: 1.0,
             from_color: palette::ORANGE,
             start: f64::NEG_INFINITY,
         }
@@ -116,7 +116,7 @@ fn ring_state(now: f64, target: f32, color: Color) -> (f32, Color, bool) {
     let mut a = RING.with(Cell::get);
     if now - a.last_draw > STALE_S {
         a.start = f64::NEG_INFINITY;
-    } else if target + 0.01 < a.last_target || color != a.last_color {
+    } else if target > a.last_target + 0.01 || color != a.last_color {
         a.from = a.shown;
         a.from_color = a.shown_color;
         a.start = now;

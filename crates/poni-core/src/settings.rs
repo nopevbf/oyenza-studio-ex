@@ -87,6 +87,7 @@ pub struct Settings {
     pub hud_volume: bool,
     pub hud_power: bool,
     pub hud_bluetooth: bool,
+    pub hud_wifi: bool,
     pub sounds: bool,
     /// Page shown first when expanding ("media", "today", "health", "shelf", "tasks", "focus", "oyenza").
     pub start_page: String,
@@ -199,6 +200,7 @@ impl Default for Settings {
             hud_volume: true,
             hud_power: true,
             hud_bluetooth: true,
+            hud_wifi: true,
             sounds: true,
             start_page: "media".into(),
             remember_page: true,

@@ -4,7 +4,7 @@
 //! `WM_APP_EVENT` to the island window; the UI thread drains the channel.
 
 use crate::gfx::Image;
-use crate::state::{MediaSession, PowerState, SysStats};
+use crate::state::{MediaSession, PowerState};
 use poni_core::health::HealthSnapshot;
 use poni_core::lrc::Lyrics;
 use poni_core::agenda;
@@ -50,12 +50,12 @@ impl EventSink {
         if self.tx.send(ev).is_ok() {
             unsafe {
                 let _ = PostMessageW(self.hwnd.hwnd(), WM_APP_EVENT, WPARAM(0), LPARAM(0));
-            }
+
         }
     }
 
-    pub fn hwnd(&self) -> SendHwnd {
-        self.hwnd
+
+
     }
 }
 
@@ -134,9 +134,13 @@ pub enum AppEvent {
     /// The outcome of checking or using the user's Apple Music token.
     AppleMusic(AppleMusicStatus),
     /// Master volume changed (0..=1).
-    Volume { level: f32, muted: bool },
+    Volume { level: f32, muted: bool, switched: bool },
     Power(PowerState),
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },
+    /// A Wi-Fi interface connected to or disconnected from a network.
+    Wifi { ssid: String, connected: bool },
+    /// Connectivity event for Bluetooth, Wi-Fi, or Ethernet toast.
+    Connectivity(crate::connectivity::model::ConnEvent),
     /// A full-screen app took over (or left) the island's monitor. `true` is
     /// sent again when another window comes to the foreground while the
     /// monitor stays full-screen, so the island can be raised back on top.
@@ -154,7 +158,6 @@ pub enum AppEvent {
     /// Files are being dragged over the island (true) or left (false).
     DragHover(bool),
     ShelfThumb { path: String, image: Option<Image> },
-    Stats(SysStats),
     /// The System page's latest reading and the minute behind it
     /// (`services::sysmon`, each second while the page is open).
     System(Box<poni_core::sysmon::Monitor>),
@@ -181,7 +184,6 @@ pub enum AppEvent {
     /// Start with Windows is on (true) or off, read for the Settings page.
     Autostart(bool),
     /// Free-form log line from a service thread.
-    Log(String),
     /// The Glass theme's screen copy has new pixels (or stopped).
     Backdrop,
 }

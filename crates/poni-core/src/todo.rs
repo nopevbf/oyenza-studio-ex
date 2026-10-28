@@ -42,6 +42,21 @@ impl TaskList {
         Some(id)
     }
 
+    /// Edit a task's text; returns true on success, false if id not found or text empty.
+    pub fn edit(&mut self, id: u64, new_text: &str) -> bool {
+        let text: String = new_text.split_whitespace().collect::<Vec<_>>().join(" ");
+        if text.is_empty() {
+            return false;
+        }
+        let text: String = text.chars().take(MAX_TASK_LEN).collect();
+        if let Some(t) = self.tasks.iter_mut().find(|t| t.id == id) {
+            t.text = text;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn toggle(&mut self, id: u64, now_unix: i64) -> bool {
         if let Some(t) = self.tasks.iter_mut().find(|t| t.id == id) {
             t.done = !t.done;
@@ -127,5 +142,16 @@ mod tests {
         let mut l = TaskList { tasks: vec![], next_id: 0 };
         assert_eq!(l.add("a", 0), Some(1));
         assert_eq!(l.add("b", 0), Some(2));
+    }
+    #[test]
+    fn edit_task() {
+        let mut l = TaskList::default();
+        let a = l.add("buy milk", 10).unwrap();
+        assert!(!l.edit(a, "   "));
+        assert!(!l.edit(999, "new text"));
+        assert!(l.edit(a, "  buy   almond   milk  "));
+        assert_eq!(l.tasks[0].text, "buy almond milk");
+        assert!(l.edit(a, &"x".repeat(500)));
+        assert_eq!(l.tasks[0].text.len(), MAX_TASK_LEN);
     }
 }

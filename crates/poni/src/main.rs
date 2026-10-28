@@ -30,6 +30,8 @@ mod autostart;
 mod clock;
 #[cfg(any(windows, target_os = "macos"))]
 mod commands;
+#[cfg(any(windows, target_os = "macos"))]
+mod connectivity;
 #[cfg(windows)]
 mod dragdrop;
 #[cfg(windows)]

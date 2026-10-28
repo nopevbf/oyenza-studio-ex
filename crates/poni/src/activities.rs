@@ -39,6 +39,7 @@ pub enum HudTag {
     Charging,
     Bluetooth,
     LowBattery,
+    Wifi,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -47,6 +48,7 @@ pub enum Mode {
     Activity(Activity),
     Hud(HudTag),
     Notice,
+    ConnectivityToast,
     Expanded(PageKind),
     /// Stepped aside (`AppState::aside`): an app window sits under where
     /// the island rests (a maximized browser's tabs), so what would rest
@@ -105,6 +107,7 @@ pub fn content_key(m: &Mode) -> u32 {
         Mode::Activity(Activity::Recording) => 7,
         Mode::Hud(t) => 10 + *t as u32,
         Mode::Notice => 20,
+        Mode::ConnectivityToast => 25,
         Mode::Expanded(_) => 30,
         Mode::Aside => 40,
     }
@@ -116,6 +119,7 @@ fn hud_tag(k: &HudKind) -> HudTag {
         HudKind::Charging { .. } => HudTag::Charging,
         HudKind::Bluetooth { .. } => HudTag::Bluetooth,
         HudKind::LowBattery { .. } => HudTag::LowBattery,
+        HudKind::Wifi { .. } => HudTag::Wifi,
     }
 }
 
@@ -170,6 +174,8 @@ pub fn collapsed_mode(st: &AppState) -> Mode {
     let waits = st.notice.as_ref().is_some_and(|n| n.stays()) && (st.hud.is_some() || st.game.active || recording);
     if st.notice.is_some() && !waits {
         Mode::Notice
+    } else if st.connectivity_toast.as_ref().is_some_and(|t| !t.is_expired(st.now)) {
+        Mode::ConnectivityToast
     } else if let Some(h) = &st.hud {
         Mode::Hud(hud_tag(&h.kind))
     } else if st.aside && !new_song_peek(st) {
@@ -264,8 +270,15 @@ pub fn geom(m: &Mode, st: &AppState) -> Geom {
         Mode::Activity(Activity::Recording) => Geom::new(recording_w(st), 32.0, 15.0),
         Mode::Hud(HudTag::Volume) => Geom::new(316.0, 40.0, 19.0),
         Mode::Hud(HudTag::Charging) | Mode::Hud(HudTag::LowBattery) => Geom::new(300.0, 40.0, 19.0),
-        Mode::Hud(HudTag::Bluetooth) => Geom::new(336.0, 46.0, 22.0),
+        Mode::Hud(HudTag::Bluetooth) | Mode::Hud(HudTag::Wifi) => Geom::new(336.0, 46.0, 22.0),
         Mode::Notice => Geom::new(372.0, 52.0, 24.0),
+        Mode::ConnectivityToast => {
+            if let Some(t) = &st.connectivity_toast {
+                Geom::new(t.width(), crate::connectivity::toast::TOAST_H, crate::connectivity::toast::TOAST_RADIUS)
+            } else {
+                Geom::new(320.0, crate::connectivity::toast::TOAST_H, crate::connectivity::toast::TOAST_RADIUS)
+            }
+        }
         Mode::Expanded(p) => {
             let h = pages::HEADER_H + pages::content_height(*p, st) + pages::PAD;
             Geom::new(st.settings.expanded_width, h.round(), 30.0)
@@ -307,6 +320,9 @@ pub fn next_wake(m: &Mode, st: &AppState) -> Option<f64> {
             next = Some(next.map_or(t, |n: f64| n.min(t)));
         }
     };
+    if let Some(t) = &st.connectivity_toast {
+        consider(t.expires_at());
+    }
     if *m == Mode::Idle && oyen_idle(st) {
         if !night(st) {
             consider(oyen::next_rest_move(now));
@@ -366,6 +382,12 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, m: &Mode, body: Rect) {
         Mode::Activity(a) => draw_activity(ui, st, *a, body),
         Mode::Hud(_) => draw_hud(ui, st, body),
         Mode::Notice => draw_notice(ui, st, body),
+        Mode::ConnectivityToast => {
+            if let Some(toast) = &st.connectivity_toast {
+                crate::connectivity::toast::draw_connectivity_toast(ui, toast, body, st.now);
+                ui.request_anim();
+            }
+        }
         Mode::Expanded(_) | Mode::Aside => {}
     }
 }
@@ -734,16 +756,36 @@ fn draw_hud(ui: &mut Ui, st: &mut AppState, body: Rect) {
         }
         HudKind::Bluetooth { name, connected, battery, audio } => {
             let c = Point::new(body.x + 30.0, cy);
-            ui.c.fill_circle(c, 15.0, if connected { palette::BLUE } else { Color::white(0.16) });
+            if connected {
+                ui.c.stroke_circle(c, 15.5, palette::BLUE, 2.0);
+            }
             let glyph = if connected { palette::ON_ACCENT } else { palette::TEXT };
             ui.c.icon(if audio { Icon::Headphones } else { Icon::Bluetooth }, Rect::from_center(c, 17.0, 17.0), glyph);
             let text_x = body.x + 54.0;
-            let text_right = match battery {
-                Some(b) => battery_badge(ui, body.right() - HUD_PAD, cy, b, if b <= 20 { palette::RED } else { palette::GREEN }) - 12.0,
-                None => body.right() - HUD_PAD,
-            };
-            let tw = text_right - text_x;
+            let tw = body.right() - HUD_PAD - text_x;
             ui.c.text(&name, Rect::new(text_x, cy - 17.0, tw, 18.0), &label_st);
+            let subtitle = match (connected, battery) {
+                (true, Some(b)) => format!("Connected · {}%", b),
+                (true, None) => "Connected".into(),
+                (false, _) => "Disconnected".into(),
+            };
+            ui.c.text(
+                &subtitle,
+                Rect::new(text_x, cy + 1.0, tw, 16.0),
+                &TextStyle::footnote().color(palette::TEXT_DIM),
+            );
+        }
+        HudKind::Wifi { ssid, connected } => {
+            let c = Point::new(body.x + 30.0, cy);
+            if connected {
+                ui.c.stroke_circle(c, 15.5, palette::BLUE, 2.0);
+            }
+            let glyph = if connected { palette::ON_ACCENT } else { palette::TEXT };
+            ui.c.icon(Icon::Wifi, Rect::from_center(c, 17.0, 17.0), glyph);
+            let text_x = body.x + 54.0;
+            let tw = body.right() - HUD_PAD - text_x;
+            let name_label = if ssid.is_empty() { "Wi-Fi" } else { ssid.as_str() };
+            ui.c.text(name_label, Rect::new(text_x, cy - 17.0, tw, 18.0), &label_st);
             ui.c.text(
                 if connected { "Connected" } else { "Disconnected" },
                 Rect::new(text_x, cy + 1.0, tw, 16.0),

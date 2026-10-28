@@ -68,7 +68,7 @@ impl HalfToSrgb {
     /// BGRA 8-bit (4 bytes a pixel), alpha opaque.
     pub fn convert_row(&self, src: &[u8], dst: &mut [u8]) {
         let half = |p: &[u8], i: usize| u16::from_le_bytes([p[i * 2], p[i * 2 + 1]]) as usize;
-        for (s, d) in src.chunks_exact(8).zip(dst.chunks_exact_mut(4)) {
+        for (s, d) in src.as_chunks::<8>().0.iter().zip(dst.as_chunks_mut::<4>().0.iter_mut()) {
             d[0] = self.table[half(s, 2)];
             d[1] = self.table[half(s, 1)];
             d[2] = self.table[half(s, 0)];
