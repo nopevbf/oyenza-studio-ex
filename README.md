@@ -6,6 +6,8 @@
 > Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
 > 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
 > 
+> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.1.0-ex**, berisi patch & fitur tambahan di atas vanilla release tersebut.
+> 
 > ---
 > 
 > ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.1.0-ex)
