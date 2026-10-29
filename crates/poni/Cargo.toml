@@ -17,6 +17,8 @@ path = "src/main.rs"
 # poni.exe: Windows downloads it as the Japanese readings add-on
 # (poni_core::addons::JAPANESE_READINGS) for the people who want it.
 poni-core = { path = "../poni-core" }
+# The AI tab's readers (crates/studio-usage), built for size.
+studio-usage = { path = "../studio-usage" }
 serde.workspace = true
 serde_json.workspace = true
 
@@ -47,10 +49,14 @@ features = [
     "Storage",
     "Storage_Streams",
     "Web_Http",
+    "Web_Http_Filters",
     "Web_Http_Headers",
     "Devices_Enumeration",
     "Devices_Bluetooth",
     "UI",
+    # The Notifications add-on: Windows' notification listener (services/notifications.rs).
+    "UI_Notifications",
+    "UI_Notifications_Management",
     "UI_ViewManagement",
     "Win32_Foundation",
     "Win32_Devices_DeviceAndDriverInstallation",
@@ -85,6 +91,7 @@ features = [
     "Win32_System_Diagnostics_Etw",
     "Win32_System_LibraryLoader",
     "Win32_System_IO",
+    "Win32_System_JobObjects",
     "Win32_System_Memory",
     "Win32_System_Ole",
     "Win32_System_Performance",
@@ -121,6 +128,9 @@ objc2-core-foundation = "=0.3.2"
 objc2-core-graphics = "=0.3.2"
 # Prayer times: where the Mac is (Location Services), only when asked.
 objc2-core-location = { version = "=0.3.2", default-features = false, features = ["std", "CLError", "CLLocation", "CLLocationManager", "CLLocationManagerDelegate"] }
+# The IELTS coach: recording a spoken answer (AVAudioRecorder) and macOS's
+# microphone question (AVAudioApplication), only while a session records.
+objc2-avf-audio = { version = "=0.3.2", default-features = false, features = ["std", "block2", "AVAudioApplication", "AVAudioRecorder", "AVAudioSettings"] }
 objc2-core-text = "=0.3.2"
 objc2-quartz-core = "=0.3.2"
 # The update file's signature (services/update.rs): the P-256 code phone

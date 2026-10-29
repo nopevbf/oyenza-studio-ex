@@ -57,6 +57,8 @@ codesign --display --entitlements - --xml "$app" 2> /dev/null | grep -q "com.app
   || { echo "the app's signature lacks the Apple Events entitlement (installer/mac/poni.entitlements)" >&2; exit 1; }
 codesign --display --entitlements - --xml "$app" 2> /dev/null | grep -q "com.apple.security.personal-information.location" \
   || { echo "the app's signature lacks the location entitlement (installer/mac/poni.entitlements)" >&2; exit 1; }
+codesign --display --entitlements - --xml "$app" 2> /dev/null | grep -q "com.apple.security.device.audio-input" \
+  || { echo "the app's signature lacks the microphone entitlement (installer/mac/poni.entitlements)" >&2; exit 1; }
 
 # 2. The DMG: the installer window with the signed app, signed too.
 base="$(basename "$src" .dmg)"
@@ -81,8 +83,15 @@ if [ "${NOTARIZE:-1}" = 1 ]; then
     fi
     exit 1
   fi
-  xcrun stapler staple "$dmg"
-  xcrun stapler validate "$dmg"
+  # Stapling and checking the stapled ticket both reach Apple's servers, and a runner's connection to them
+  # sometimes drops for a moment (Error 68, "The network connection was lost": the staple once and the check
+  # once on 28 Oct 2026), so the two get five tries together, 30 s apart.
+  for try in 1 2 3 4 5; do
+    xcrun stapler staple "$dmg" && xcrun stapler validate "$dmg" && break
+    [ "$try" -lt 5 ] || exit 1
+    echo "stapling or its check failed (try $try of 5), again in 30 s" >&2
+    sleep 30
+  done
   # What Gatekeeper says about a downloaded copy: "accepted", source=Notarized Developer ID.
   spctl --assess --type open --context context:primary-signature --verbose=4 "$dmg"
   hdiutil attach "$dmg" -nobrowse -readonly -mountpoint "$work/mnt" -quiet

@@ -54,6 +54,31 @@ pub fn phone_inbox_dir() -> PathBuf {
     if before_rename.is_dir() { before_rename } else { downloads.join("Oyenza Studio") }
 }
 
+/// Where the Downloader saves videos and sound: `~/Downloads`, as a browser
+/// would. An app may create files there without asking (macOS asks before
+/// it reads one it didn't make). Under `PONI_HOME` for the smoke run.
+pub fn media_downloads_dir() -> PathBuf {
+    if let Some(h) = home_override() {
+        return h.join("downloads");
+    }
+    std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(".")).join("Downloads")
+}
+
+/// A meeting's audio while it is recorded and handed over (Meeting notes),
+/// deleted once its notes are saved.
+pub fn notes_audio_dir() -> PathBuf {
+    cache_dir().join("notes")
+}
+
+/// Where meeting notes are saved, as Markdown: `~/Documents/Oyenza Studio/Notes`.
+/// Under `PONI_HOME` for the smoke run.
+pub fn notes_dir() -> PathBuf {
+    if let Some(h) = home_override() {
+        return h.join("notes-saved");
+    }
+    std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(".")).join("Documents").join("Oyenza Studio").join("Notes")
+}
+
 pub fn lyrics_cache_dir() -> PathBuf {
     cache_dir().join("lyrics")
 }
@@ -63,6 +88,12 @@ pub fn lyrics_cache_dir() -> PathBuf {
 /// them again.
 pub fn addons_dir() -> PathBuf {
     cache_dir().join("addons")
+}
+
+/// The IELTS page's audio: Oyen's clips and the answer being recorded, each
+/// deleted once used.
+pub fn ielts_dir() -> PathBuf {
+    cache_dir().join("ielts")
 }
 
 /// The Oyenza sign-in (this Mac's key and the masked account), in a file
@@ -76,6 +107,14 @@ pub fn oyenza_link_path() -> PathBuf {
 /// server once it can.
 pub fn oyenza_revoke_path() -> PathBuf {
     data_dir().join("oyenza-revoke.bin")
+}
+
+/// A key typed into the AI tab for one service, or the inference.oyenza.com
+/// key (`usage-<name>.bin`), in a file only this Mac account can read
+/// (`services::secret`). With the settings, not the cache: macOS may empty
+/// caches by itself.
+pub fn usage_key_path(name: &str) -> PathBuf {
+    data_dir().join(format!("usage-{name}.bin"))
 }
 
 /// The person's Apple Music token (owner-only file; uninstalling with the

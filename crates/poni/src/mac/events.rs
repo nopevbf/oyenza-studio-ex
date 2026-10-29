@@ -84,6 +84,8 @@ pub enum OyenzaEvent {
     /// The server has no day for the Today page (a server from before it, or
     /// switched off there): the page stays as it was before signing in mattered.
     DayUnavailable,
+    /// Whether the account has Studio Pro (a server from before Pro: no).
+    Pro(bool),
     /// The day couldn't be read just now (offline, a server error).
     DayFailed,
     NoteSaved(Vec<Saved>),
@@ -132,6 +134,10 @@ pub enum AppEvent {
     Phone(poni_core::phonedrop::Event),
     /// Where an add-on's files stand (`services::addons`).
     Addon { id: &'static str, status: poni_core::addons::Status },
+    /// One of yt-dlp's lines for download `id` (`services::downloader`).
+    Download { id: u64, line: poni_core::ytdlp::Line },
+    /// yt-dlp for download `id` ended (`ok`: it exited with 0).
+    DownloadEnded { id: u64, ok: bool },
     /// What the update file said (`services::update`).
     Update(crate::services::update::UpdateEvent),
     /// Where the Mac is, for Prayer times (`services::location`).
@@ -140,8 +146,22 @@ pub enum AppEvent {
     Cities { file: String, got: Result<poni_core::prayer::World, String> },
     /// The Stocks page's prices, names and years (`services::stocks`).
     Stocks(crate::services::stocks::StocksEvent),
+    /// The AI tab's readings, typed keys, inference.oyenza.com's link and
+    /// heads-up notices (`services::usage`).
+    Usage(crate::services::usage::UsageEvent),
     /// Prayer times' adzan played to its end (`services::adzan`).
     AdzanEnded,
     /// Free-form log line from a service thread.
     Log(String),
+    /// The IELTS worker's answer (`services::ielts`).
+    Ielts(Box<poni_core::ielts::Reply>),
+    /// The meeting being handed over, as it goes (`services::notes`).
+    Notes(Box<poni_core::notes::Reply>),
+    /// The meeting's recording stopped by itself (the longest meeting taken,
+    /// or the disk): why (`services::notes`).
+    NotesStopped(poni_core::notes::CaptureIssue),
+    /// The IELTS coach's voice played a line to its end, or couldn't play on (`services::voice`).
+    VoiceEnded,
+    /// The IELTS coach's microphone stopped by itself, or the person said no to macOS's question (`services::mic`).
+    MicFailed(String),
 }

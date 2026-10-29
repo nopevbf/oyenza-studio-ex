@@ -46,7 +46,18 @@ jobs:
           cargo build -p poni --release --target x86_64-apple-darwin
 
       - name: Unit tests (core)
-        run: cargo test -p poni-core --release
+        run: cargo test -p poni-core -p studio-usage --release
+
+      # The Downloader add-on for real (services/downloader_live.rs): yt-dlp,
+      # our QuickJS-ng and our FFmpeg exactly as poni_core::addons pins them
+      # for the Mac, made runnable as the add-on makes them, then a 70 s
+      # Blender film from Blender's own PeerTube as video and as sound, and
+      # through the island's own runner (a process group per download, and a
+      # stop that leaves nothing unfinished behind). About a minute; the
+      # film's site having trouble only warns.
+      - name: Downloader with the pinned tools and a real link
+        timeout-minutes: 10
+        run: cargo test -p poni --release --target aarch64-apple-darwin the_pinned_tools_download_a_real_link -- --ignored --nocapture
 
       # Every island state with sample data, Classic, Oyen, Glass (a
       # smoked stand-in for macOS's glass) and Pill, without and with a
@@ -98,8 +109,9 @@ jobs:
       # Pill floating below the top edge, Oyen, Glass and Pill around a notch
       # the app pretends the screen has, the adapter's test player in macOS's
       # own now playing, a tab playing in the runner's Edge (YouTube's way of
-      # naming a song), and the menu. At each state the app writes where its
-      # window is and waits; tools/mac-smoke.sh takes the screenshot and answers.
+      # naming a song), the AI tab's keychain reads (test items of its own),
+      # and the menu. At each state the app writes where its window is and
+      # waits; tools/mac-smoke.sh takes the screenshot and answers.
       - name: Smoke run (the real window, with screenshots)
         env:
           MEDIAREMOTE_TEST_CLIENT: build/mediaremote/MediaRemoteAdapterTestClient
@@ -147,6 +159,85 @@ jobs:
             smoke/report.json
             smoke/stdout.txt
             smoke/home/poni.log
+
+  # The Downloader add-on's Mac tools (addons/downloader-mac/NOTICE.txt): our
+  # minimal FFmpeg (tools/build-ffmpeg-min.sh) and QuickJS-ng, each one file
+  # for Apple silicon and Intel, macOS 14 and later, signed ad-hoc. They
+  # change only with the FFmpeg script or QuickJS-ng's commit, so a run takes
+  # the last build from the cache and builds again (a few minutes) only then.
+  # The artifact holds what goes on the addon-downloader-mac-1 pre-release:
+  # the two tools, their SHA-256s and FFmpeg's source.
+  downloader-tools:
+    name: Downloader add-on's Mac tools (FFmpeg, QuickJS-ng)
+    runs-on: macos-15
+    env:
+      # QuickJS-ng v0.17.0, the version Windows takes from QuickJS-ng's own
+      # release (whose Mac files are one per chip and need macOS 26).
+      QJS_COMMIT: 6d46d07d04041b40f4f49eaa7fdebe44c314c699
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: dist/downloader-mac
+          key: downloader-mac-${{ hashFiles('tools/build-ffmpeg-min.sh') }}-${{ env.QJS_COMMIT }}
+      - name: FFmpeg (Apple silicon and Intel, one file)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: TARGETS=darwin tools/build-ffmpeg-min.sh dist/downloader-mac/ffmpeg
+      # One CMake build makes both halves in one file.
+      - name: QuickJS-ng (Apple silicon and Intel, one file)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          git init -q build/quickjs
+          git -C build/quickjs fetch -q --depth 1 https://github.com/quickjs-ng/quickjs.git "$QJS_COMMIT"
+          git -C build/quickjs checkout -q FETCH_HEAD
+          cmake -S build/quickjs -B build/quickjs/out -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+          cmake --build build/quickjs/out --target qjs_exe -j 4
+          mkdir -p dist/downloader-mac/qjs
+          cp build/quickjs/out/qjs dist/downloader-mac/qjs/qjs
+          codesign --force --sign - dist/downloader-mac/qjs/qjs
+      - name: Check, size and SHA-256
+        working-directory: dist/downloader-mac
+        run: |
+          for f in ffmpeg/darwin/ffmpeg qjs/qjs; do
+            lipo -info "$f"
+            codesign --verify --strict --verbose=2 "$f"
+            # macOS 14.0 in each half, and nothing linked but the system's own.
+            vtool -show-build "$f" | grep -E 'architecture|minos'
+            otool -L "$f" | grep '^[[:space:]]' | grep -v '^[[:space:]]*/usr/lib/' && { echo "::error::$f links something outside /usr/lib"; exit 1; } || true
+          done
+          ffmpeg/darwin/ffmpeg -hide_banner -version | head -1
+          qjs/qjs -e 'console.log("qjs", typeof BigInt, [1, 2, 3].at(-1))'
+          if arch -x86_64 /usr/bin/true 2> /dev/null; then
+            arch -x86_64 ffmpeg/darwin/ffmpeg -hide_banner -version | head -1
+            arch -x86_64 qjs/qjs -e 'console.log("qjs, the Intel half")'
+          else
+            echo "(no Rosetta on this runner: the Intel halves are checked by lipo and vtool only)"
+          fi
+          cp ffmpeg/darwin/ffmpeg ffmpeg-mac && cp qjs/qjs qjs-mac
+          shasum -a 256 ffmpeg-mac qjs-mac | tee SHA256SUMS
+          ls -l ffmpeg-mac qjs-mac
+      # The app downloads the files on addon-downloader-mac-1, pinned in
+      # poni_core::addons::DOWNLOADER_MAC. A build here that differs (another
+      # Xcode, another script) is worth knowing, not a failure: the release's
+      # files are the ones people get.
+      - name: Same bytes as the pinned files
+        run: |
+          for f in ffmpeg qjs; do
+            pin=$(grep -o "name: \"$f\", size: [0-9_]*, sha256: \"[0-9a-f]*\"" crates/poni-core/src/addons.rs | grep -o '[0-9a-f]\{64\}' || true)
+            got=$(shasum -a 256 "dist/downloader-mac/$f-mac" | cut -d' ' -f1)
+            if [ "$pin" = "$got" ]; then echo "$f matches the pin ($got)"; else echo "::warning::this build of the Mac's $f ($got) isn't the pinned one (${pin:-none})"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: downloader-tools-mac
+          path: |
+            dist/downloader-mac/ffmpeg-mac
+            dist/downloader-mac/qjs-mac
+            dist/downloader-mac/SHA256SUMS
+            dist/downloader-mac/ffmpeg/ffmpeg-*.tar.xz
+          if-no-files-found: error
 
   # Liquid Glass came with macOS 26: the same DMG's smoke run on a macOS 26
   # runner, where the Glass steps show the real glass (the macOS 15 run
@@ -330,9 +421,26 @@ jobs:
           ( umask 077 && printf '%s\n' "$P8" > "$NOTARY_KEY" )
           SIGN_KEYCHAIN="$KEYCHAIN" bash tools/sign_mac_dmg.sh dmg/*.dmg signed "$IDENTITY"
           echo "signed=true" >> "$GITHUB_OUTPUT"
+      # The signed DMG goes up as soon as it exists, so a run whose smoke run
+      # fails still leaves it to look at. A release takes it only when this
+      # whole job succeeds (needs.sign.result in the release job).
+      - uses: actions/upload-artifact@v4
+        if: steps.dmg.outputs.signed == 'true'
+        with:
+          name: oyenza-studio-mac-dmg-signed
+          path: signed/*.dmg
+      # The adapter's test player, as every other smoke run has it.
+      - uses: actions/download-artifact@v4
+        if: steps.dmg.outputs.signed == 'true'
+        with:
+          name: mediaremote-test-client
+          path: build/mediaremote
       - name: Smoke run, the signed app
         if: steps.dmg.outputs.signed == 'true'
+        env:
+          MEDIAREMOTE_TEST_CLIENT: build/mediaremote/MediaRemoteAdapterTestClient
         run: |
+          chmod +x "$MEDIAREMOTE_TEST_CLIENT"
           hdiutil attach signed/*.dmg -nobrowse -readonly -mountpoint /tmp/poni-signed
           mkdir -p dist
           cp -R /tmp/poni-signed/*.app dist/
@@ -340,11 +448,43 @@ jobs:
           apps=(dist/*.app)
           app="${apps[0]}"
           bash tools/mac-smoke.sh "$app/Contents/MacOS/poni"
+      # The signed app's reader for macOS's now playing (browsers, any player),
+      # tried the way the build job tries the unsigned framework: as signed in
+      # the app, and as the copy the app made in its cache folder. It only
+      # reports. 28 Oct 2026: that copy was the binary alone, which macOS
+      # refuses once the signature is a Developer ID ("code signature invalid").
+      - name: Now playing reader, with the signed framework
+        if: always() && steps.dmg.outputs.signed == 'true'
+        timeout-minutes: 3
+        env:
+          MEDIAREMOTE_TEST_CLIENT: build/mediaremote/MediaRemoteAdapterTestClient
+        run: |
+          apps=(dist/*.app)
+          app="${apps[0]}"
+          if [ ! -d "$app" ]; then echo "no signed app in dist/"; exit 0; fi
+          chmod +x "$MEDIAREMOTE_TEST_CLIENT"
+          fw="$PWD/$app/Contents/Frameworks/MediaRemoteAdapter.framework"
+          # The copy the smoke run's app made itself, if it made one.
+          own=$(find "$PWD/smoke/home" "$HOME/Library/Caches" -path "*mediaremote/MediaRemoteAdapter.framework" 2> /dev/null | head -1)
+          echo "the app's own copy: ${own:-none}"
+          codesign --display --verbose=2 "$fw" 2>&1 | grep -E "^(Identifier|Format|CodeDirectory|Authority|TeamIdentifier)" || true
+          set +e
+          for f in "$fw" ${own:+"$own"}; do
+            # The script says only "Failed to load framework"; this says why.
+            /usr/bin/perl -MDynaLoader -e 'DynaLoader::dl_load_file($ARGV[0], 0) or die "does not load: " . DynaLoader::dl_error() . "\n"; print "loads: $ARGV[0]\n"' "$f/MediaRemoteAdapter"
+            /usr/bin/perl "$app/Contents/Resources/mediaremote-adapter.pl" "$f" "$PWD/$MEDIAREMOTE_TEST_CLIENT" test
+            echo "adapter test, $f: exit $?"
+          done
+          exit 0
       - uses: actions/upload-artifact@v4
-        if: steps.dmg.outputs.signed == 'true'
+        if: always() && steps.dmg.outputs.signed == 'true'
         with:
-          name: oyenza-studio-mac-dmg-signed
-          path: signed/*.dmg
+          name: mac-smoke-signed
+          path: |
+            smoke/*.png
+            smoke/report.json
+            smoke/stdout.txt
+            smoke/home/poni.log
       - name: Remove the keychain and the key
         if: always()
         run: |

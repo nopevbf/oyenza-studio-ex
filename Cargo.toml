@@ -1,14 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["crates/poni-core", "crates/poni"]
+members = ["crates/poni-core", "crates/studio-usage", "crates/poni"]
 
 [workspace.package]
-version = "0.2.14"
+version = "1.1.0"
 edition = "2021"
 publish = false
 license = "MIT"
-repository = "https://github.com/lucacadalora/oyenza-studio"
-homepage = "https://github.com/lucacadalora/oyenza-studio"
+repository = "https://github.com/nopevbf/oyenza-studio-ex"
+homepage = "https://github.com/nopevbf/oyenza-studio-ex"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -46,4 +46,8 @@ opt-level = "s"
 [profile.release.package.serde_json]
 opt-level = "s"
 [profile.release.package.qrcodegen]
+opt-level = "s"
+# The AI tab's readers (crates/studio-usage): JSON and log parsing that runs
+# for moments every few minutes, while the tab is open or its notices are on.
+[profile.release.package.studio-usage]
 opt-level = "s"

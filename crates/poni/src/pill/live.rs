@@ -1,6 +1,6 @@
 //! The other live activities, collapsed: a screen recording, the focus
-//! timer, music with the timer, the minutes before a prayer and the readout
-//! over games. Each is a
+//! timer, music with the timer, the minutes before a prayer, the readout
+//! over games and downloads. Each is a
 //! 32-DIP capsule sized to what it shows (spec 6.1 and 6.8).
 //!
 //! The Pill way: content keeps clear of the round ends (16 DIPs for text, 12
@@ -11,10 +11,10 @@
 //! widest value, so a pill keeps its width while they change.
 //!
 //! Nothing here moves by itself: the countdowns repaint on the app's
-//! existing one-shot wakes (the timer's second, the minute) and the readout
-//! when a reading arrives.
+//! existing one-shot wakes (the timer's second, the minute), the readout
+//! when a reading arrives and the downloads as yt-dlp reports.
 
-use crate::activities::{prayer_countdown, Activity};
+use crate::activities::{count_chip, download_many, download_pct, download_view, draw_prayer_ok, prayer_countdown, Activity, DownloadView, PRAYER_OK_ROOM};
 use crate::gfx::{TextStyle, Weight};
 use crate::icons::Icon;
 use crate::island::Geom;
@@ -57,7 +57,8 @@ const ART: f32 = 20.0;
 const ART_R: f32 = 6.0;
 const MARK_GAP: f32 = 7.0;
 /// The countdown before a prayer: a crescent in the end cap, then "Maghrib
-/// 10 min" with the minutes in a two-digit slot (60 at most).
+/// 10 min" with the minutes in a two-digit slot (60 at most), then its OK
+/// in the other end (`activities::draw_prayer_ok`).
 const MOON: f32 = 14.0;
 const MOON_GAP: f32 = 8.0;
 /// The readout over games: the frame rate, the GPU and the CPU between thin
@@ -71,6 +72,13 @@ const DIVIDER_H: f32 = 14.0;
 /// DIP of type size (Segoe UI and SF are both about 0.4): smaller words move
 /// down by the difference, so the readout reads along one baseline.
 const BASELINE_K: f32 = 0.4;
+/// Downloads, in the timer's place: the arrow's box where the ring sits
+/// (its lines fill about 11 x 12 of it, at a 1.5 DIP stroke), and the
+/// count's chip 6 past the arrow. The timer's widths, the long one while
+/// the count shows.
+const DOWNLOAD_GLYPH: f32 = 18.0;
+const COUNT_H: f32 = 18.0;
+const COUNT_X: f32 = 12.0;
 
 fn capsule(w: f32) -> Geom {
     Geom::new(w, H, H / 2.0)
@@ -78,7 +86,8 @@ fn capsule(w: f32) -> Geom {
 
 pub fn geom(a: Activity, st: &AppState) -> Option<Geom> {
     let w = match a {
-        Activity::Media => return None,
+        // Oyen's head, listening or writing, is the same pill in every theme.
+        Activity::Media | Activity::Notes => return None,
         Activity::Timer if long_countdown(st) => TIMER_LONG_W,
         Activity::Timer => TIMER_W,
         Activity::MediaTimer => MEDIA_TIMER_W,
@@ -86,18 +95,21 @@ pub fn geom(a: Activity, st: &AppState) -> Option<Geom> {
         Activity::Game => game_w(st),
         Activity::Recording if st.rec_elapsed() >= 3600.0 => TIMER_LONG_W,
         Activity::Recording => TIMER_W,
+        Activity::Download if download_many(st) => TIMER_LONG_W,
+        Activity::Download => TIMER_W,
     };
     Some(capsule(w))
 }
 
 pub fn draw(ui: &mut Ui, st: &mut AppState, a: Activity, body: Rect) -> bool {
     match a {
-        Activity::Media => return false,
+        Activity::Media | Activity::Notes => return false,
         Activity::Timer => draw_timer(ui, st, body),
         Activity::MediaTimer => draw_media_timer(ui, st, body),
         Activity::Prayer => draw_prayer(ui, st, body),
         Activity::Game => draw_game(ui, st, body),
         Activity::Recording => draw_recording(ui, st, body),
+        Activity::Download => draw_download(ui, st, body),
     }
     true
 }
@@ -195,6 +207,23 @@ fn draw_recording(ui: &mut Ui, st: &AppState, body: Rect) {
     ui.c.text(&text, Rect::new(right - 80.0, body.y, 80.0, body.h), &digits(phase != Some(Phase::Recording)).right());
 }
 
+/// Downloads, in the timer's place: the download arrow in the left end cap,
+/// the count on a chip beside it while more than one waits or runs, and the
+/// percentage where the countdown sits (a grey dash until a size is known:
+/// no ring here, as a 14-DIP one has no room for the arrow).
+fn draw_download(ui: &mut Ui, st: &AppState, body: Rect) {
+    let c = Point::new(body.x + GLYPH_INSET + RING_D / 2.0, body.center().y);
+    let right = body.right() - DIGITS_RIGHT;
+    let slot = Rect::new(right - 80.0, body.y, 80.0, body.h);
+    let DownloadView { fraction, count } = download_view(st);
+    ui.c.icon(Icon::Download, Rect::from_center(c, DOWNLOAD_GLYPH, DOWNLOAD_GLYPH), INK);
+    if count > 1 {
+        count_chip(ui, count, c.x + COUNT_X, c.y, COUNT_H, TextStyle::footnote().weight(Weight::Semibold).tabular().color(INK));
+    }
+    let text = fraction.map_or_else(|| "\u{2013}".to_string(), download_pct);
+    ui.c.text(&text, slot, &digits(fraction.is_none()).right());
+}
+
 /// Album art in the left end cap (or a note on a grey tile), dimmed while
 /// the player is paused, as in the music pill.
 fn art(ui: &mut Ui, st: &AppState, r: Rect, playing: bool) {
@@ -244,7 +273,7 @@ fn prayer_w(st: &AppState) -> f32 {
         }
     }
     // Before the first frame: about 7 DIPs a character at 13 semibold.
-    (GLYPH_INSET + MOON + MOON_GAP + 7.0 * prayer_slot_text(prayer).chars().count() as f32 + TEXT_INSET).ceil()
+    (GLYPH_INSET + MOON + MOON_GAP + 7.0 * prayer_slot_text(prayer).chars().count() as f32 + PRAYER_OK_ROOM).ceil()
 }
 
 /// A filled crescent `d` across centred on `c`: Poni's moon icon, filled
@@ -269,15 +298,17 @@ fn draw_prayer(ui: &mut Ui, st: &AppState, body: Rect) {
     let col = st.accent;
     let ts = prayer_style(col);
     let (slot, _) = ui.c.measure(&prayer_slot_text(prayer), &ts, 400.0);
-    let w = (GLYPH_INSET + MOON + MOON_GAP + slot + TEXT_INSET).ceil();
+    let w = (GLYPH_INSET + MOON + MOON_GAP + slot + PRAYER_OK_ROOM).ceil();
     PRAYER_FIT.with(|f| f.set(Some((prayer, w))));
-    // The pill keeps the two-digit width; the moon and the line centre in
-    // it as one group, so "8 min" doesn't leave a gap at the end. They
-    // shift half a digit once, at "10 min" to "9 min", as the text changes.
+    // The pill keeps the two-digit width; the moon and the line centre
+    // left of the OK as one group, so "8 min" doesn't leave a gap before
+    // it. They shift half a digit once, at "10 min" to "9 min", as the
+    // text changes.
     let text = format!("{} {left} min", prayer.name());
     let (tw, _) = ui.c.measure(&text, &ts, 400.0);
+    let end = draw_prayer_ok(ui, body);
     let content = MOON + MOON_GAP + tw;
-    let x0 = (body.center().x - content / 2.0).max(body.x + GLYPH_INSET);
+    let x0 = ((body.x + GLYPH_INSET + end) / 2.0 - content / 2.0).max(body.x + GLYPH_INSET);
     moon(ui, Point::new(x0 + MOON / 2.0, body.center().y), MOON, col);
     ui.c.text(&text, Rect::new(x0 + MOON + MOON_GAP, body.y, tw + 2.0, body.h), &ts);
 }
@@ -481,7 +512,7 @@ mod tests {
     fn nothing_in_the_live_pills_moves_by_itself() {
         let st = state();
         assert_eq!(is_live(Activity::MediaTimer, &st), Some(false));
-        for a in [Activity::Timer, Activity::Prayer, Activity::Game] {
+        for a in [Activity::Timer, Activity::Prayer, Activity::Game, Activity::Download] {
             assert_eq!(is_live(a, &st), None, "{a:?}: Classic's answer (no frames) stands");
         }
     }
