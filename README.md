@@ -1,3 +1,37 @@
+> [!NOTE]
+> ### 🚨 Yo Wazzup! Fork Notice & Custom Edition Info 🛠️
+> 
+> Santai sejenak slur! Repositori ini adalah **projek fork pribadi** dari [**Oyenza Studio**](https://github.com/lucacadalora/oyenza-studio) yang udah di-tweak, di-mod, dan dipoles biar makin pas sama workflow & kebutuhan pribadi sehari-hari. 
+> 
+> Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
+> 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
+> 
+> ---
+> 
+> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.1.0-ex)
+> Gak cuma sekadar fork kosongan, di versi ini udah disuntik beberapa fitur racikan mantap:
+> - 🔔 **Living Connectivity Toasts**:
+>   - Notifikasi notch dinamis & estetik saat status koneksi berubah!
+>   - **Bluetooth**: Deteksi device (headphone, TWS, mouse, gamepad) lengkap dengan display persentase baterai real-time dan animasi *double-pulse ring* warna biru.
+>   - **Wi-Fi & Ethernet**: Munculin SSID Wi-Fi aktif atau status kabel LAN pas connect, dan alert merah halus saat disconnect.
+> - 📝 **Inline Task Editing & Reminder**:
+>   - Gak perlu lagi ribet hapus terus ketik ulang cuma buat benerin typo to-do list. Klik ikon pensil langsung edit di tempat.
+>   - Fitur reminder & timer biar gak lupa kelarin kerjaan.
+> - ⚡ **Cross-Platform & Pipeline Stability**:
+>   - Fix build kompatibilitas macOS dan Windows headless Bluetooth test di CI.
+>   - Integrasi updater mandiri yang diarahkan langsung ke rilis fork ini.
+> 
+> ---
+> 
+> ### ☕ Traktir Kopi Dulu Bosque (Buy Me a Coffee via QRIS) muehehe
+> Suka sama hasil modifikasinya atau terbantu sama fitur tambahan di fork ini? Mau nyawer dikit buat beli kopi / kuota biar developer-nya makin melek ngoding? Boleh banget di-scan QRIS di bawah ini:
+> 
+> <p align="center">
+>   <img src="docs/brand/donate-qris.jpg" width="280" alt="QRIS Noorbyte Food & Drink"><br>
+>   <sub><b>NOORBYTE FOOD & DRINK - FAST FOOD</b> (NMID: <code>ID1026605994676</code>)</sub><br>
+>   <sub><i>Scan via GoPay, OVO, DANA, BCA, Livin, ShopeePay, atau m-Banking apa aja. Makasih banyak ya support-nya, mantap jiwa! 🔥</i></sub>
+> </p>
+
 <p align="center"><img src="docs/brand/oyen-poni-logo.svg" width="96" alt="Oyenza Studio logo: an orange tile with the black island at the top playing music, and a white Oyen below"></p>
 
 <h1 align="center">Oyenza Studio</h1>
