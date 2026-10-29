@@ -1,0 +1,50 @@
+{
+  "repo": "nopevbf/oyenza-studio-ex",
+  "checked_at": "2026-10-29T17:33:33Z",
+  "since": "2026-10-28",
+  "downloads": 6,
+  "github_count": 6,
+  "ci_count": 0,
+  "last_7_days": 6,
+  "latest": {
+    "release": "v1.1.0",
+    "downloads": 4
+  },
+  "stars": 0,
+  "forks": 0,
+  "watchers": 0,
+  "releases": [
+    {
+      "release": "v1.1.0",
+      "published": "2026-10-29T13:38:50Z",
+      "downloads": 4,
+      "github_count": 4,
+      "ci_count": 0,
+      "files": {
+        "Oyen-Poni-Mac.dmg": 1,
+        "Oyen-Poni-Setup.exe": 0,
+        "Oyenza-Studio-1.1.0-mac.dmg": 0,
+        "Oyenza-Studio-1.1.0-portable.zip": 1,
+        "Oyenza-Studio-Mac.dmg": 0,
+        "Oyenza-Studio-Setup-1.1.0.exe": 1,
+        "Oyenza-Studio-Setup.exe": 1
+      }
+    },
+    {
+      "release": "v0.2.14",
+      "published": "2026-10-28T15:20:42Z",
+      "downloads": 2,
+      "github_count": 2,
+      "ci_count": 0,
+      "files": {
+        "Oyenza-Studio-Setup-0.2.14.exe": 2
+      }
+    }
+  ],
+  "days": [
+    {
+      "date": "2026-10-29",
+      "downloads": 6
+    }
+  ]
+}
