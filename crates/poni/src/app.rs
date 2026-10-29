@@ -4683,6 +4683,7 @@ impl App {
                     }
                 }
 
+                Command::FocusText => self.focus_text(),
                 Command::BlurText => self.blur_text(),
                 Command::RecordScreen => services::recorder::record_screen(self.hwnd),
                 Command::Record => {
@@ -4752,6 +4753,7 @@ impl App {
                         u.install_on_next_start(&mut self.st);
                     }
                 }
+                Command::WantStats(b) => self.set_stats(b),
 
                 Command::SetAutostart(on) => {
                     self.st.ui.autostart = Some(on);
