@@ -195,9 +195,10 @@ pub enum AppEvent {
     AdzanEnded,
     /// Start with Windows is on (true) or off, read for the Settings page.
     Autostart(bool),
-    /// Free-form log line from a service thread.
     /// The Glass theme's screen copy has new pixels (or stopped).
     Backdrop,
+    /// Free-form log line from a service thread.
+    #[allow(dead_code)]
     Log(String),
     /// The IELTS worker's answer (`services::ielts`).
     Ielts(Box<poni_core::ielts::Reply>),

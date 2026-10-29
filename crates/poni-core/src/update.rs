@@ -8,10 +8,12 @@
 use serde::{Deserialize, Serialize};
 
 /// Where every copy looks.
-pub const FEED_URL: &str = "https://studio.oyenza.com/latest.json";
+pub const FEED_URL: &str = "https://raw.githubusercontent.com/nopevbf/oyenza-studio-ex/main/site/latest.json";
 /// Downloads only ever come from this repository's releases.
-const DOWNLOADS: &str = "https://github.com/lucacadalora/oyenza-studio/releases/download/v";
-const RELEASE_PAGE: &str = "https://github.com/lucacadalora/oyenza-studio/releases/tag/v";
+const DOWNLOADS: &str = "https://github.com/nopevbf/oyenza-studio-ex/releases/download/v";
+const RELEASE_PAGE: &str = "https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v";
+const UPSTREAM_DOWNLOADS: &str = "https://github.com/lucacadalora/oyenza-studio/releases/download/v";
+const UPSTREAM_RELEASE_PAGE: &str = "https://github.com/lucacadalora/oyenza-studio/releases/tag/v";
 /// The file's layout this version reads. A file with a newer one is ignored
 /// (a later version of the app will read it).
 pub const SCHEMA: u64 = 1;
@@ -111,7 +113,8 @@ impl Download {
     /// The version whose release this file is ("0.2.5"), from its address:
     /// [`parse_payload`] made sure it is that release's own.
     pub fn version(&self) -> Option<&str> {
-        self.url.strip_prefix(DOWNLOADS)?.split('/').next().filter(|v| parts(v).is_some())
+        let after_prefix = self.url.strip_prefix(DOWNLOADS).or_else(|| self.url.strip_prefix(UPSTREAM_DOWNLOADS))?;
+        after_prefix.split('/').next().filter(|v| parts(v).is_some())
     }
 }
 
@@ -138,12 +141,15 @@ pub fn parse_payload(text: &str) -> Result<Release, String> {
     if parts(&p.version).is_none() {
         return Err(format!("\"{:.20}\" isn't a version", p.version));
     }
-    if p.notes != format!("{RELEASE_PAGE}{}", p.version) {
+    let valid_notes = p.notes == format!("{RELEASE_PAGE}{}", p.version)
+        || p.notes == format!("{UPSTREAM_RELEASE_PAGE}{}", p.version);
+    if !valid_notes {
         return Err("its notes aren't this repository's release page".into());
     }
     let prefix = format!("{DOWNLOADS}{}/", p.version);
+    let upstream_prefix = format!("{UPSTREAM_DOWNLOADS}{}/", p.version);
     for d in p.windows.iter().chain(&p.mac) {
-        let name = d.url.strip_prefix(&prefix).unwrap_or_default();
+        let name = d.url.strip_prefix(&prefix).or_else(|| d.url.strip_prefix(&upstream_prefix)).unwrap_or_default();
         let plain = !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c));
         if !plain || d.size == 0 || d.sha256.len() != 64 || !d.sha256.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) {
             return Err(format!("a download isn't one of v{}'s own files", p.version));
@@ -278,7 +284,7 @@ mod tests {
 
     fn payload(version: &str, extra: &str) -> String {
         format!(
-            r#"{{"schema":1,"version":"{version}","date":"2026-10-25","headline":"Sing along from the closed island","notes":"https://github.com/lucacadalora/oyenza-studio/releases/tag/v{version}","windows":{{"url":"https://github.com/lucacadalora/oyenza-studio/releases/download/v{version}/Oyenza-Studio-Setup-{version}.exe","size":2457657,"sha256":"{SHA}"}}{extra}}}"#
+            r#"{{"schema":1,"version":"{version}","date":"2026-10-25","headline":"Sing along from the closed island","notes":"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v{version}","windows":{{"url":"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v{version}/Oyenza-Studio-Setup-{version}.exe","size":2457657,"sha256":"{SHA}"}}{extra}}}"#
         )
     }
 
@@ -309,7 +315,7 @@ mod tests {
         assert_eq!((r.version.as_str(), r.date.as_str(), r.headline.as_str()), (V, "2026-10-25", "Sing along from the closed island"));
         assert_eq!(r.download(false).map(|d| d.size), Some(2457657));
         assert_eq!(r.download(true), None, "no DMG yet");
-        let mac = r#","mac":{"url":"https://github.com/lucacadalora/oyenza-studio/releases/download/v0.2.3/Oyenza-Studio-0.2.3-mac.dmg","size":3667341,"sha256":"fabc80efc387be83d7f82702bede7c3d2470f7aa6ef62cc2a8cd095a425f3fb9"}"#;
+        let mac = r#","mac":{"url":"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v0.2.3/Oyenza-Studio-0.2.3-mac.dmg","size":3667341,"sha256":"fabc80efc387be83d7f82702bede7c3d2470f7aa6ef62cc2a8cd095a425f3fb9"}"#;
         let r = parse_payload(&payload(V, mac)).unwrap();
         assert_eq!(r.download(true).map(|d| d.size), Some(3667341));
         // Each download knows its release's version (a Mac checks the app in the DMG against it).
@@ -323,7 +329,7 @@ mod tests {
     fn a_payload_pointing_elsewhere_is_refused() {
         let p = payload(V, "");
         // Downloads from another place, another version's folder, or a path that climbs out.
-        assert!(parse_payload(&p.replace("https://github.com/lucacadalora/oyenza-studio/releases/download", "https://example.com/x")).is_err());
+        assert!(parse_payload(&p.replace("https://github.com/nopevbf/oyenza-studio-ex/releases/download", "https://example.com/x")).is_err());
         assert!(parse_payload(&p.replace("download/v0.2.3/", "download/v0.2.2/")).is_err());
         assert!(parse_payload(&p.replace("Oyenza-Studio-Setup-0.2.3.exe", "../../x/evil.exe")).is_err());
         // Notes elsewhere, a bad hash, a newer layout, not a version.

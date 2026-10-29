@@ -1261,7 +1261,7 @@ const SAMPLE_SCRIPT: &str = "Hi everyone, this one takes two minutes. Today I'll
 Drop any file on the island and it waits on the Shelf. Press the phone button, scan the code, and the file is on your phone. \
 No cable, no account, nothing to install on the phone.\n\nThat's it. Thanks for watching.";
 
-const SCENES: [Scene; 133] = [
+const SCENES: [Scene; 134] = [
     Scene::IdleClock,
     Scene::IdleEyes,
     Scene::Media,

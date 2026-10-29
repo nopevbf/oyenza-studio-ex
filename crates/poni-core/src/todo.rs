@@ -94,6 +94,16 @@ impl TaskList {
         (done, done + self.open_count())
     }
 
+    /// Whether there are pending (undone) tasks created at or after `day_start_unix`.
+    pub fn has_pending_tasks_today(&self, day_start_unix: i64) -> bool {
+        self.tasks.iter().any(|t| !t.done && t.created_unix >= day_start_unix)
+    }
+
+    /// Number of pending tasks created at or after `day_start_unix`.
+    pub fn pending_tasks_today_count(&self, day_start_unix: i64) -> usize {
+        self.tasks.iter().filter(|t| !t.done && t.created_unix >= day_start_unix).count()
+    }
+
     /// Display order: open tasks first (oldest first), then today's done tasks.
     pub fn display_order(&self, day_start_unix: i64) -> Vec<&Task> {
         let mut open: Vec<&Task> = self.tasks.iter().filter(|t| !t.done).collect();
@@ -153,5 +163,34 @@ mod tests {
         assert_eq!(l.tasks[0].text, "buy almond milk");
         assert!(l.edit(a, &"x".repeat(500)));
         assert_eq!(l.tasks[0].text.len(), MAX_TASK_LEN);
+    }
+
+    #[test]
+    fn pending_tasks_today() {
+        let mut l = TaskList::default();
+        let day_start = 1_000;
+        // Task from yesterday
+        let old = l.add("yesterday task", 500).unwrap();
+        assert!(!l.has_pending_tasks_today(day_start));
+        assert_eq!(l.pending_tasks_today_count(day_start), 0);
+
+        // Task created today
+        let today1 = l.add("today task 1", 1_200).unwrap();
+        let today2 = l.add("today task 2", 1_300).unwrap();
+        assert!(l.has_pending_tasks_today(day_start));
+        assert_eq!(l.pending_tasks_today_count(day_start), 2);
+
+        // Complete one task
+        l.toggle(today1, 1_400);
+        assert!(l.has_pending_tasks_today(day_start));
+        assert_eq!(l.pending_tasks_today_count(day_start), 1);
+
+        // Complete the other task
+        l.toggle(today2, 1_500);
+        assert!(!l.has_pending_tasks_today(day_start));
+        assert_eq!(l.pending_tasks_today_count(day_start), 0);
+
+        // Old task is still open, but was not created today
+        assert!(!l.tasks.iter().find(|t| t.id == old).unwrap().done);
     }
 }

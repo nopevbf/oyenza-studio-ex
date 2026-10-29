@@ -289,3 +289,13 @@ mod tests {
         assert!(ev.is_none(), "No event should be emitted when connection state has not changed");
     }
 }
+
+#[cfg(not(windows))]
+pub struct WifiService;
+
+#[cfg(not(windows))]
+impl WifiService {
+    pub fn start(_sink: crate::events::EventSink) -> Result<Self, String> {
+        Ok(Self)
+    }
+}

@@ -402,14 +402,14 @@ unsafe extern "system" fn ip_change_callback(
 }
 
 fn worker(rx: Receiver<Msg>, sink: EventSink) {
-    let mut debouncer = Debouncer::new(1.5);
+    let mut debouncer = Debouncer::new(2.5);
     let mut last_state = is_ethernet_connected();
 
     while let Ok(msg) = rx.recv() {
         match msg {
             Msg::Stop => break,
             Msg::Changed => {
-                std::thread::sleep(std::time::Duration::from_millis(200));
+                std::thread::sleep(std::time::Duration::from_millis(2500));
                 let curr_state = is_ethernet_connected();
                 if curr_state != last_state {
                     last_state = curr_state;
@@ -432,6 +432,45 @@ fn worker(rx: Receiver<Msg>, sink: EventSink) {
     }
 }
 
+/// Check if an adapter name or description corresponds to a virtual/tunnel interface.
+pub fn is_virtual_adapter(friendly: &str, desc: &str) -> bool {
+    let lower_f = friendly.to_lowercase();
+    let lower_d = desc.to_lowercase();
+    let virtual_keywords = [
+        "vethernet", "wsl", "docker", "tailscale", "tap-", "virtual",
+        "hyper-v", "vmware", "host-only", "wireguard", "vpn", "loopback",
+    ];
+    for kw in virtual_keywords {
+        if lower_f.contains(kw) || lower_d.contains(kw) {
+            return true;
+        }
+    }
+    false
+}
+
+#[cfg(windows)]
+unsafe fn has_valid_unicast_ip(mut addr_ptr: *const windows::Win32::NetworkManagement::IpHelper::IP_ADAPTER_UNICAST_ADDRESS_LH) -> bool {
+    while !addr_ptr.is_null() {
+        let addr = &*addr_ptr;
+        let lp_sockaddr = addr.Address.lpSockaddr;
+        if !lp_sockaddr.is_null() {
+            let family = (*lp_sockaddr).sa_family;
+            if family == windows::Win32::Networking::WinSock::AF_INET {
+                let sin = &*(lp_sockaddr as *const windows::Win32::Networking::WinSock::SOCKADDR_IN);
+                let ip_bytes = sin.sin_addr.S_un.S_addr.to_ne_bytes();
+                // Check not APIPA (169.254.x.x) and not 0.0.0.0
+                if ip_bytes[0] != 0 && !(ip_bytes[0] == 169 && ip_bytes[1] == 254) {
+                    return true;
+                }
+            } else if family == windows::Win32::Networking::WinSock::AF_INET6 {
+                return true;
+            }
+        }
+        addr_ptr = addr.Next;
+    }
+    false
+}
+
 /// Query whether any physical Ethernet adapter is currently connected (`OperStatus == IfOperStatusUp`).
 pub fn is_ethernet_connected() -> bool {
     let flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER;
@@ -450,7 +489,19 @@ pub fn is_ethernet_connected() -> bool {
         while !p.is_null() {
             let a = unsafe { &*p };
             if a.IfType == IF_TYPE_ETHERNET && a.OperStatus.0 == 1 /* IfOperStatusUp */ {
-                return true;
+                let friendly = if !a.FriendlyName.is_null() {
+                    unsafe { a.FriendlyName.to_string().unwrap_or_default() }
+                } else {
+                    String::new()
+                };
+                let desc = if !a.Description.is_null() {
+                    unsafe { a.Description.to_string().unwrap_or_default() }
+                } else {
+                    String::new()
+                };
+                if !is_virtual_adapter(&friendly, &desc) && unsafe { has_valid_unicast_ip(a.FirstUnicastAddress) } {
+                    return true;
+                }
             }
             p = a.Next;
         }
@@ -585,6 +636,20 @@ mod tests {
     }
 
     #[test]
+    fn test_is_virtual_adapter() {
+        assert!(is_virtual_adapter("vEthernet (Default Switch)", "Hyper-V Virtual Ethernet"));
+        assert!(is_virtual_adapter("vEthernet (WSL)", "Hyper-V Virtual Ethernet"));
+        assert!(is_virtual_adapter("Tailscale", "Tailscale Tunnel"));
+        assert!(is_virtual_adapter("Ethernet 2", "TAP-Windows Adapter V9"));
+        assert!(is_virtual_adapter("DockerNAT", "Hyper-V"));
+        assert!(is_virtual_adapter("VMware Network Adapter VMnet1", "VMware Virtual"));
+
+        assert!(!is_virtual_adapter("Ethernet", "Realtek PCIe GbE Family Controller"));
+        assert!(!is_virtual_adapter("Ethernet", "Intel(R) Ethernet Connection (2) I219-V"));
+        assert!(!is_virtual_adapter("LAN", "Killer E2500 Gigabit Ethernet Controller"));
+    }
+
+    #[test]
     fn test_stage_mapped_to_speaker() {
         let ev = build_bluetooth_conn_event("Stage".into(), true, None, true, 100.0);
         match ev.kind {
@@ -603,4 +668,27 @@ mod tests {
         let stage = devices.iter().find(|d| d.name.to_lowercase().contains("stage"));
         assert!(stage.is_some(), "Stage Bluetooth device should be found via cfgmgr32 query");
     }
+}
+
+#[cfg(not(windows))]
+pub struct BluetoothPnpWatcher;
+#[cfg(not(windows))]
+impl BluetoothPnpWatcher {
+    pub fn start(_sink: EventSink) -> Result<Self, String> {
+        Ok(Self)
+    }
+}
+
+#[cfg(not(windows))]
+pub struct EthernetWatcher;
+#[cfg(not(windows))]
+impl EthernetWatcher {
+    pub fn start(_sink: EventSink) -> Result<Self, String> {
+        Ok(Self)
+    }
+}
+
+#[cfg(not(windows))]
+pub fn is_ethernet_connected() -> bool {
+    false
 }

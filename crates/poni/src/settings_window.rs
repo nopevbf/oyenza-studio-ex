@@ -246,6 +246,7 @@ pub enum Key {
     HudVolume,
     HudPower,
     HudBluetooth,
+    ConnectivityToasts,
     RememberPage,
     StartPage,
     Tab(PageKind),
@@ -452,6 +453,7 @@ pub fn blocks(section: Section, st: &AppState) -> Vec<Block> {
                 switch(Key::HudVolume, "Volume", Some("When you change the volume or mute"), s.hud_volume),
                 switch(Key::HudPower, "Charger and battery", Some("When you plug in, unplug or run low"), s.hud_power),
                 switch(Key::HudBluetooth, "Bluetooth", Some("When headphones and other devices connect"), s.hud_bluetooth),
+                switch(Key::ConnectivityToasts, "Connectivity toasts", Some("When Bluetooth, Wi-Fi or Ethernet connects or drops"), s.connectivity_toasts),
             ],
         )],
         Section::Tabs => {
@@ -593,6 +595,7 @@ pub fn apply(st: &mut AppState, key: Key, act: Act) {
         Key::HudVolume => s.hud_volume = !s.hud_volume,
         Key::HudPower => s.hud_power = !s.hud_power,
         Key::HudBluetooth => s.hud_bluetooth = !s.hud_bluetooth,
+        Key::ConnectivityToasts => s.connectivity_toasts = !s.connectivity_toasts,
         Key::RememberPage => s.remember_page = !s.remember_page,
         Key::StartPage => {
             let pages = start_pages(st);

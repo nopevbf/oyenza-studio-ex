@@ -1,7 +1,7 @@
 //! Which build this is, for the menu's About line and the tray tooltip:
 //! the version, plus where the build came from (build.rs fills these in).
 
-const REPO: &str = "https://github.com/lucacadalora/oyenza-studio";
+const REPO: &str = "https://github.com/nopevbf/oyenza-studio-ex";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// "release" (a release tag's CI build), "test" (any other CI build) or "local".
 const KIND: &str = env!("PONI_BUILD_KIND");
@@ -52,13 +52,13 @@ mod tests {
 
     #[test]
     fn a_release_opens_its_notes_and_a_test_build_its_commit() {
-        assert_eq!(url("0.2.3", "release", "c7d77c8"), "https://github.com/lucacadalora/oyenza-studio/releases/tag/v0.2.3");
-        assert_eq!(url("0.2.3", "test", "c7d77c8"), "https://github.com/lucacadalora/oyenza-studio/commit/c7d77c8");
-        assert_eq!(url("0.2.3", "local", ""), "https://github.com/lucacadalora/oyenza-studio/releases");
+        assert_eq!(url("1.1.0", "release", "c7d77c8"), "https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.1.0");
+        assert_eq!(url("1.1.0", "test", "c7d77c8"), "https://github.com/nopevbf/oyenza-studio-ex/commit/c7d77c8");
+        assert_eq!(url("1.1.0", "local", ""), "https://github.com/nopevbf/oyenza-studio-ex/releases");
     }
 
     #[test]
-    fn test_version_is_0_2_14() {
-        assert_eq!(VERSION, "0.2.14");
+    fn test_version_is_1_1_0() {
+        assert_eq!(VERSION, "1.1.0");
     }
 }

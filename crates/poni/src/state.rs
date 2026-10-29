@@ -1354,6 +1354,26 @@ mod tests {
     }
 
     #[test]
+    fn task_reminder_at_21_00_behavior() {
+        let mut st = AppState::new(Settings::default(), Store::default());
+        let day_start = 1_000_000;
+        st.unix = day_start + 21 * 3600; // 21:00
+        st.local = LocalDateTime { year: 2026, month: 10, day: 29, hour: 21, minute: 0, second: 0 };
+
+        // 1. No tasks: no pending tasks
+        assert!(!st.store.tasks.has_pending_tasks_today(day_start));
+
+        // 2. Add task created today
+        let t1 = st.store.tasks.add("buy almond milk", day_start + 100).unwrap();
+        assert!(st.store.tasks.has_pending_tasks_today(day_start));
+        assert_eq!(st.store.tasks.pending_tasks_today_count(day_start), 1);
+
+        // 3. Mark task completed
+        st.store.tasks.toggle(t1, day_start + 500);
+        assert!(!st.store.tasks.has_pending_tasks_today(day_start));
+    }
+
+    #[test]
     fn an_ai_reading_keeps_its_last_numbers_through_a_trouble() {
         use crate::services::usage::UsageEvent;
         use studio_usage::Source;

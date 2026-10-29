@@ -542,6 +542,8 @@ pub struct App {
     /// The Notifications add-on's listener while it is on; None while it's
     /// off, in the download (no package identity) and in the self-test.
     notify: Option<services::notifications::Listener>,
+    /// Day when 21:00 task reminder was last fired (YYYYMMDD).
+    task_reminded_day: Option<u32>,
 }
 
 /// The island window: position and size in screen pixels.
@@ -728,6 +730,7 @@ impl App {
             laid_floating: false,
             updater: None,
             notify: None,
+            task_reminded_day: None,
         })
     }
 
@@ -1313,8 +1316,14 @@ impl App {
             }
             WM_WTSSESSION_CHANGE_ => {
                 match wp.0 {
-                    WTS_SESSION_LOCK_ => self.locked = true,
-                    WTS_SESSION_UNLOCK_ => self.locked = false,
+                    WTS_SESSION_LOCK_ => {
+                        self.locked = true;
+                        self.st.connectivity_queue.clear();
+                    }
+                    WTS_SESSION_UNLOCK_ => {
+                        self.locked = false;
+                        self.st.connectivity_queue.clear();
+                    }
                     _ => {}
                 }
                 self.tell_oyenza_activity();
@@ -3372,6 +3381,9 @@ impl App {
     }
 
     fn trigger_connectivity_toast(&mut self, ev: crate::connectivity::model::ConnEvent) {
+        if !self.st.settings.connectivity_toasts || self.locked || self.display_off {
+            return;
+        }
         let now = clock::mono();
         self.st.now = now;
         if !self.st.connectivity_debouncer.should_emit_event(&ev, now) {
@@ -3391,6 +3403,37 @@ impl App {
         }
         self.st.connectivity_toast = Some(crate::connectivity::toast::ConnectivityToast::new(ev, now));
         self.request_frame();
+    }
+
+    fn check_task_reminder(&mut self, free: bool) {
+        if !free || self.st.local.hour < 21 {
+            return;
+        }
+        let today_key = (self.st.local.year as u32) * 10000 + (self.st.local.month as u32) * 100 + (self.st.local.day as u32);
+        if self.task_reminded_day == Some(today_key) {
+            return;
+        }
+        let pending = self.st.store.tasks.pending_tasks_today_count(self.st.day_start_unix());
+        if pending > 0 {
+            self.task_reminded_day = Some(today_key);
+            let title = if pending == 1 {
+                "1 task left today".to_string()
+            } else {
+                format!("{pending} tasks left today")
+            };
+            self.st.notify(
+                Icon::ListChecks,
+                self.st.accent,
+                title,
+                "Click to open tasks",
+                6.0,
+                Some(crate::state::NoticeAction::OpenPage(crate::pages::PageKind::Tasks)),
+            );
+            if self.st.settings.sounds {
+                self.st.cmd(crate::commands::Command::Play(crate::commands::Sound::Chime));
+            }
+            self.request_frame();
+        }
     }
 
     fn tick(&mut self) {
@@ -3433,6 +3476,7 @@ impl App {
             pages::focus::on_phase_ended(&mut self.st, ended);
         }
         self.prayer_tick();
+        self.check_task_reminder(free);
         self.ielts_tick();
         self.notes_tick();
         self.script_tick();
