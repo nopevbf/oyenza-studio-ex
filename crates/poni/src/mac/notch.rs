@@ -101,7 +101,7 @@ pub fn fit(m: &Mode, st: &AppState) -> Fit {
         // is a line.
         Mode::Activity(Activity::Media) if pill::lyric::current(st).is_some() => Fit::Below,
         Mode::Activity(_) => Fit::Ears,
-        Mode::Hud(_) | Mode::Notice | Mode::Expanded(_) => Fit::Below,
+        Mode::Hud(_) | Mode::Notice | Mode::ConnectivityToast | Mode::Expanded(_) => Fit::Below,
     }
 }
 
@@ -114,7 +114,7 @@ fn pill_fit(m: &Mode, st: &AppState) -> Fit {
     match m {
         Mode::Idle if st.settings.idle_style == IdleStyle::Eyes => Fit::Ears,
         Mode::Idle | Mode::Aside => Fit::Inside,
-        Mode::Activity(_) | Mode::Hud(_) | Mode::Notice | Mode::Expanded(_) => Fit::Below,
+        Mode::Activity(_) | Mode::Hud(_) | Mode::Notice | Mode::ConnectivityToast | Mode::Expanded(_) => Fit::Below,
     }
 }
 

@@ -6,27 +6,35 @@ use std::collections::HashMap;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread::JoinHandle;
 use std::time::Duration;
+#[cfg(windows)]
 use windows::core::PCWSTR;
+#[cfg(windows)]
 use windows::Win32::Foundation::{
     BOOLEAN, ERROR_BUFFER_OVERFLOW, ERROR_SUCCESS, HANDLE, NO_ERROR, WIN32_ERROR,
 };
+#[cfg(windows)]
 use windows::Win32::Devices::DeviceAndDriverInstallation::{
     CM_Get_DevNode_PropertyW, CM_Get_Device_ID_ListW, CM_Get_Device_ID_List_SizeW,
     CM_Locate_DevNodeW, CM_LOCATE_DEVNODE_FLAGS, CM_GETIDLIST_FILTER_ENUMERATOR, CM_GETIDLIST_FILTER_PRESENT, CR_SUCCESS,
 };
+#[cfg(windows)]
 use windows::Win32::Devices::Properties::{
     DEVPKEY_Device_FriendlyName, DEVPKEY_NAME, DEVPROPKEY, DEVPROPTYPE,
 };
+#[cfg(windows)]
 use windows::Win32::NetworkManagement::IpHelper::{
     CancelMibChangeNotify2, GetAdaptersAddresses, NotifyIpInterfaceChange, GAA_FLAG_SKIP_ANYCAST,
     GAA_FLAG_SKIP_DNS_SERVER, GAA_FLAG_SKIP_MULTICAST, IP_ADAPTER_ADDRESSES_LH,
     MIB_IPINTERFACE_ROW, MIB_NOTIFICATION_TYPE,
 };
+#[cfg(windows)]
 use windows::Win32::Networking::WinSock::AF_UNSPEC;
 
+#[cfg(windows)]
 const IF_TYPE_ETHERNET: u32 = 6;
 
 /// DEVPKEY_Bluetooth_Battery ({104EA319-6EE2-4701-BD47-8DDBF425BBE5}, 2)
+#[cfg(windows)]
 pub const DEVPKEY_BLUETOOTH_BATTERY: DEVPROPKEY = DEVPROPKEY {
     fmtid: windows::core::GUID::from_u128(0x104ea319_6ee2_4701_bd47_8ddbf425bbe5),
     pid: 2,
@@ -41,6 +49,7 @@ enum Msg {
 // Bluetooth PnP Watcher (cfgmgr32 BTHENUM PRESENT) - Reflection from Nusa
 // ---------------------------------------------------------------------------
 
+#[cfg(windows)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct BluetoothDeviceSnapshot {
     pub mac: String,
@@ -49,11 +58,13 @@ pub struct BluetoothDeviceSnapshot {
     pub audio: bool,
 }
 
+#[cfg(windows)]
 pub struct BluetoothPnpWatcher {
     tx: Sender<Msg>,
     thread: Option<JoinHandle<()>>,
 }
 
+#[cfg(windows)]
 impl BluetoothPnpWatcher {
     pub fn start(sink: EventSink) -> Result<Self, String> {
         let (tx, rx) = mpsc::channel();
@@ -65,6 +76,7 @@ impl BluetoothPnpWatcher {
     }
 }
 
+#[cfg(windows)]
 impl Drop for BluetoothPnpWatcher {
     fn drop(&mut self) {
         let _ = self.tx.send(Msg::Stop);
@@ -321,6 +333,7 @@ pub fn query_present_bluetooth_devices() -> Vec<BluetoothDeviceSnapshot> {
 // ---------------------------------------------------------------------------
 
 /// Ethernet connection watcher using `NotifyIpInterfaceChange`.
+#[cfg(windows)]
 pub struct EthernetWatcher {
     handle: HANDLE,
     tx: Sender<Msg>,
@@ -328,9 +341,12 @@ pub struct EthernetWatcher {
     thread: Option<JoinHandle<()>>,
 }
 
+#[cfg(windows)]
 unsafe impl Send for EthernetWatcher {}
+#[cfg(windows)]
 unsafe impl Sync for EthernetWatcher {}
 
+#[cfg(windows)]
 impl EthernetWatcher {
     pub fn start(sink: EventSink) -> Result<Self, String> {
         let (tx, rx) = mpsc::channel::<Msg>();
@@ -374,6 +390,7 @@ impl EthernetWatcher {
     }
 }
 
+#[cfg(windows)]
 impl Drop for EthernetWatcher {
     fn drop(&mut self) {
         unsafe {
@@ -472,6 +489,7 @@ unsafe fn has_valid_unicast_ip(mut addr_ptr: *const windows::Win32::NetworkManag
 }
 
 /// Query whether any physical Ethernet adapter is currently connected (`OperStatus == IfOperStatusUp`).
+#[cfg(windows)]
 pub fn is_ethernet_connected() -> bool {
     let flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER;
     let mut size: u32 = 16 * 1024;
@@ -661,12 +679,11 @@ mod tests {
     }
 
     #[test]
+    #[cfg(windows)]
     fn test_query_present_bluetooth_devices_runs_without_panic() {
         let devices = query_present_bluetooth_devices();
         println!("query_present_bluetooth_devices found: {:?}", devices);
-        // On this machine, Stage should be found:
-        let stage = devices.iter().find(|d| d.name.to_lowercase().contains("stage"));
-        assert!(stage.is_some(), "Stage Bluetooth device should be found via cfgmgr32 query");
+        let _ = devices.len();
     }
 }
 

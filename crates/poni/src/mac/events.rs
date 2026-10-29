@@ -113,6 +113,7 @@ pub enum AppEvent {
     Volume { level: f32, muted: bool, switched: bool },
     Power(PowerState),
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },
+    Connectivity(crate::connectivity::model::ConnEvent),
     /// A full-screen app took over (or left) the island's screen.
     Fullscreen(bool),
     /// Files dropped on the island.

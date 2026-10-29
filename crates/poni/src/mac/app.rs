@@ -1746,6 +1746,7 @@ impl App {
                 self.apply_fullscreen();
             }
             AppEvent::Oyenza(ev) => self.on_oyenza(ev),
+            AppEvent::Connectivity(_) => {}
         }
         if let Some(before) = media_before {
             self.after_media_change(before, now);
