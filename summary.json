@@ -1,11 +1,11 @@
 {
   "repo": "nopevbf/oyenza-studio-ex",
-  "checked_at": "2026-10-29T17:33:33Z",
+  "checked_at": "2026-10-30T02:09:38Z",
   "since": "2026-10-28",
-  "downloads": 6,
-  "github_count": 6,
+  "downloads": 7,
+  "github_count": 7,
   "ci_count": 0,
-  "last_7_days": 6,
+  "last_7_days": 7,
   "latest": {
     "release": "v1.1.0",
     "downloads": 4
@@ -33,11 +33,11 @@
     {
       "release": "v0.2.14",
       "published": "2026-10-28T15:20:42Z",
-      "downloads": 2,
-      "github_count": 2,
+      "downloads": 3,
+      "github_count": 3,
       "ci_count": 0,
       "files": {
-        "Oyenza-Studio-Setup-0.2.14.exe": 2
+        "Oyenza-Studio-Setup-0.2.14.exe": 3
       }
     }
   ],
@@ -45,6 +45,10 @@
     {
       "date": "2026-10-29",
       "downloads": 6
+    },
+    {
+      "date": "2026-10-30",
+      "downloads": 1
     }
   ]
 }

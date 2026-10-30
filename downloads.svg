@@ -4,11 +4,11 @@
 <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Helvetica, Arial, sans-serif">
 <path d="M86.5,68.0L86.5,128.0" stroke="#D8BF9C" stroke-width="1"/>
 <path d="M87.0,75.0H769.0A4.0,4.0 0 0 1 773.0,79.0V89.0A4.0,4.0 0 0 1 769.0,93.0H87.0Z" fill="#D9661C"/>
-<path d="M87.0,107.0H426.0A4.0,4.0 0 0 1 430.0,111.0V121.0A4.0,4.0 0 0 1 426.0,125.0H87.0Z" fill="#D9661C"/>
+<path d="M87.0,107.0H597.5A4.0,4.0 0 0 1 601.5,111.0V121.0A4.0,4.0 0 0 1 597.5,125.0H87.0Z" fill="#D9661C"/>
 <text x="28.0" y="44.0" font-size="16" fill="#2B1B10" font-weight="600">Downloads per release</text>
 <text x="77.0" y="88.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">1.1.0</text>
 <text x="781.0" y="88.5" font-size="14" fill="#2B1B10" font-weight="600">4</text>
 <text x="77.0" y="120.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">0.2.14</text>
-<text x="438.0" y="120.5" font-size="14" fill="#2B1B10" font-weight="600">2</text>
+<text x="609.5" y="120.5" font-size="14" fill="#2B1B10" font-weight="600">3</text>
 </g>
 </svg>

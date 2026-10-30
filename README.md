@@ -1,24 +1,25 @@
 <p align="center"><img src="art/oyen-poni-peek.webp" width="260" alt="Oyen peeking over a playing island"></p>
 
-<h1 align="center">6 downloads</h1>
+<h1 align="center">7 downloads</h1>
 
-<p align="center">of Oyenza Studio for Windows, from GitHub since 28 Oct 2026<br>Latest release, 1.1.0: <b>4</b> · Last 7 days: <b>6</b> · <b>0</b> stars on GitHub</p>
+<p align="center">of Oyenza Studio for Windows, from GitHub since 28 Oct 2026<br>Latest release, 1.1.0: <b>4</b> · Last 7 days: <b>7</b> · <b>0</b> stars on GitHub</p>
 
-<p align="center"><img src="downloads.svg" width="820" alt="Bar chart of downloads per release: 1.1.0 4, 0.2.14 2"></p>
+<p align="center"><img src="downloads.svg" width="820" alt="Bar chart of downloads per release: 1.1.0 4, 0.2.14 3"></p>
 
 ## Per release
 
 | Release | Published | Download button | Versioned installer | Portable zip | Other files | Total |
 | --- | --- | --: | --: | --: | --: | --: |
 | [1.1.0](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.1.0) | 29 Oct 2026 | 1 | 1 | 1 | 1 | 4 |
-| [0.2.14](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v0.2.14) | 28 Oct 2026 | — | 2 | — | — | 2 |
-| **All releases** | | **1** | **3** | **1** | **1** | **6** |
+| [0.2.14](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v0.2.14) | 28 Oct 2026 | — | 3 | — | — | 3 |
+| **All releases** | | **1** | **4** | **1** | **1** | **7** |
 
 ## Per day
 
 | Day | Downloads |
 | --- | --: |
-| Today | 6 |
+| Today | 1 |
+| 29 Oct 2026 | 6 |
 
 ## On GitHub
 
@@ -36,4 +37,4 @@
 
 </details>
 
-<sub>Updated 29 Oct 2026, 17:33 UTC by [Download stats](https://github.com/nopevbf/oyenza-studio-ex/actions/workflows/metrics.yml), every hour · Data: [downloads](data/downloads.csv), [CI downloads](data/ci-downloads.csv), [stars](data/repo.csv), [summary.json](summary.json)</sub>
+<sub>Updated 30 Oct 2026, 02:09 UTC by [Download stats](https://github.com/nopevbf/oyenza-studio-ex/actions/workflows/metrics.yml), every hour · Data: [downloads](data/downloads.csv), [CI downloads](data/ci-downloads.csv), [stars](data/repo.csv), [summary.json](summary.json)</sub>
