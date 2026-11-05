@@ -2,13 +2,13 @@
 //!
 //! Rule 1 (Keep it light & Non-blocking):
 //! DDC/CI calls over the I2C bus can be slow (50-200ms) on some external displays.
-//! Hardware brightness requests are dispatched to a worker thread with a 100ms timeout
-//! so the UI thread remains responsive at 60 FPS.
+//! Hardware brightness requests are dispatched on-demand to a transient worker thread
+//! so the UI thread remains responsive at 60 FPS, and NO thread runs at rest while idle.
 
 use crate::events::{AppEvent, EventSink};
 use poni_core::brightness::clamp_brightness;
-use std::sync::mpsc::{self, Receiver, Sender};
-use std::thread::JoinHandle;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 use windows::core::Result;
 use windows::Win32::Devices::Display::{
     DestroyPhysicalMonitors, GetMonitorBrightness, GetNumberOfPhysicalMonitorsFromHMONITOR,
@@ -17,81 +17,55 @@ use windows::Win32::Devices::Display::{
 use windows::Win32::Foundation::{BOOL, LPARAM, RECT};
 use windows::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
 
-#[allow(dead_code)]
-pub enum BrightnessCmd {
-    Read,
-    Step(f32),
-    Set(f32),
-    Stop,
-}
-
 pub struct BrightnessService {
-    tx: Sender<BrightnessCmd>,
-    thread: Option<JoinHandle<()>>,
+    sink: EventSink,
+    cached_level: Arc<AtomicU32>,
 }
 
 #[allow(dead_code)]
 impl BrightnessService {
     pub fn start(sink: EventSink) -> Result<Self> {
-        let (tx, rx) = mpsc::channel();
-        let thread = std::thread::Builder::new()
-            .name("poni-brightness".into())
-            .spawn(move || {
-                worker(sink, rx);
-            })
-            .ok();
-        Ok(Self { tx, thread })
+        let cached_level = Arc::new(AtomicU32::new((0.70_f32).to_bits()));
+        Ok(Self { sink, cached_level })
     }
 
     pub fn read(&self) {
-        let _ = self.tx.send(BrightnessCmd::Read);
+        let sink = self.sink.clone();
+        let cached = Arc::clone(&self.cached_level);
+        let _ = std::thread::Builder::new()
+            .name("poni-brightness".into())
+            .spawn(move || {
+                let level = read_system_brightness().unwrap_or_else(|| f32::from_bits(cached.load(Ordering::Relaxed)));
+                cached.store(level.to_bits(), Ordering::Relaxed);
+                sink.send(AppEvent::Brightness { level });
+            });
     }
 
     pub fn step(&self, delta: f32) {
-        let _ = self.tx.send(BrightnessCmd::Step(delta));
+        let sink = self.sink.clone();
+        let cached = Arc::clone(&self.cached_level);
+        let _ = std::thread::Builder::new()
+            .name("poni-brightness".into())
+            .spawn(move || {
+                let curr = f32::from_bits(cached.load(Ordering::Relaxed));
+                let target = clamp_brightness(curr + delta);
+                cached.store(target.to_bits(), Ordering::Relaxed);
+                let _ = apply_system_brightness(target);
+                sink.send(AppEvent::Brightness { level: target });
+            });
     }
 
     pub fn set(&self, level: f32) {
-        let _ = self.tx.send(BrightnessCmd::Set(level));
-    }
-}
-
-impl Drop for BrightnessService {
-    fn drop(&mut self) {
-        let _ = self.tx.send(BrightnessCmd::Stop);
-        if let Some(t) = self.thread.take() {
-            let _ = t.join();
-        }
-    }
-}
-
-fn worker(sink: EventSink, rx: Receiver<BrightnessCmd>) {
-    let mut current_level = read_system_brightness().unwrap_or(0.70);
-    // Send initial level
-    sink.send(AppEvent::Brightness { level: current_level });
-
-    while let Ok(cmd) = rx.recv() {
-        match cmd {
-            BrightnessCmd::Read => {
-                if let Some(level) = read_system_brightness() {
-                    current_level = level;
-                }
-                sink.send(AppEvent::Brightness { level: current_level });
-            }
-            BrightnessCmd::Step(delta) => {
-                let target = clamp_brightness(current_level + delta);
-                current_level = target;
+        let sink = self.sink.clone();
+        let cached = Arc::clone(&self.cached_level);
+        let _ = std::thread::Builder::new()
+            .name("poni-brightness".into())
+            .spawn(move || {
+                let target = clamp_brightness(level);
+                cached.store(target.to_bits(), Ordering::Relaxed);
                 let _ = apply_system_brightness(target);
-                sink.send(AppEvent::Brightness { level: current_level });
-            }
-            BrightnessCmd::Set(target) => {
-                let clamped = clamp_brightness(target);
-                current_level = clamped;
-                let _ = apply_system_brightness(clamped);
-                sink.send(AppEvent::Brightness { level: current_level });
-            }
-            BrightnessCmd::Stop => break,
-        }
+                sink.send(AppEvent::Brightness { level: target });
+            });
     }
 }
 

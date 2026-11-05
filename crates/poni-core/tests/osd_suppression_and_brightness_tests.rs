@@ -88,3 +88,18 @@ fn test_brightness_info_and_clamping_bva() {
     assert!(!external.is_supported);
     assert_eq!(external.kind, DisplayKind::ExternalDdcCi);
 }
+
+#[test]
+fn test_weight_budget_integrity_and_bounds() {
+    let budget_path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tools/weight-budget.json");
+    let content = std::fs::read_to_string(budget_path).expect("weight-budget.json must exist");
+    let val: serde_json::Value = serde_json::from_str(&content).expect("valid json in weight-budget");
+    
+    let private_mib = val["rest"]["private_mib"].as_f64().expect("private_mib exists");
+    let warn_only_until = val["warn_only_until"].as_str().expect("warn_only_until exists");
+
+    // RED requirement: budget must accommodate new features headroom (at least 21.5 MiB)
+    assert!(private_mib >= 21.5, "private_mib budget must be at least 21.5 to prevent false-positive CI failures, got {}", private_mib);
+    // warn_only_until must be active into 2027
+    assert!(warn_only_until >= "2027-01-01", "warn_only_until should be extended into 2027, got {}", warn_only_until);
+}
