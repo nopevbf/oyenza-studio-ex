@@ -1,15 +1,16 @@
 <p align="center"><img src="art/oyen-poni-peek.webp" width="260" alt="Oyen peeking over a playing island"></p>
 
-<h1 align="center">30 downloads</h1>
+<h1 align="center">37 downloads</h1>
 
-<p align="center">of Oyenza Studio for Windows, from GitHub since 28 Oct 2026<br>Latest release, 1.2.4: <b>7</b> · Last 7 days: <b>24</b> · <b>0</b> stars on GitHub</p>
+<p align="center">of Oyenza Studio for Windows, from GitHub since 28 Oct 2026<br>Latest release, 1.3.0: <b>7</b> · Last 7 days: <b>31</b> · <b>0</b> stars on GitHub</p>
 
-<p align="center"><img src="downloads.svg" width="820" alt="Bar chart of downloads per release: 1.2.4 7, 1.2.3 4, 1.2.2 4, 1.2.1 4, 1.2.0 4, 1.1.0 4, 0.2.14 3; and per day, for the last 8 days"></p>
+<p align="center"><img src="downloads.svg" width="820" alt="Bar chart of downloads per release: 1.3.0 7, 1.2.4 7, 1.2.3 4, 1.2.2 4, 1.2.1 4, 1.2.0 4, 1.1.0 4, 0.2.14 3; and per day, for the last 8 days"></p>
 
 ## Per release
 
 | Release | Published | Download button | Versioned installer | Portable zip | Other files | Total |
 | --- | --- | --: | --: | --: | --: | --: |
+| [1.3.0](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.3.0) | 5 Nov 2026 | 1 | 0 | 1 | 5 | 7 |
 | [1.2.4](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.4) | 5 Nov 2026 | 1 | 1 | 1 | 4 | 7 |
 | [1.2.3](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.3) | 5 Nov 2026 | 2 | 0 | 1 | 1 | 4 |
 | [1.2.2](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.2) | 5 Nov 2026 | 1 | 1 | 1 | 1 | 4 |
@@ -17,13 +18,13 @@
 | [1.2.0](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.0) | 5 Nov 2026 | 1 | 1 | 1 | 1 | 4 |
 | [1.1.0](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.1.0) | 29 Oct 2026 | 1 | 1 | 1 | 1 | 4 |
 | [0.2.14](https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v0.2.14) | 28 Oct 2026 | — | 3 | — | — | 3 |
-| **All releases** | | **7** | **8** | **6** | **9** | **30** |
+| **All releases** | | **8** | **8** | **7** | **14** | **37** |
 
 ## Per day
 
 | Day | Downloads |
 | --- | --: |
-| Today | 23 |
+| Today | 30 |
 | 4 Nov 2026 | 0 |
 | 3 Nov 2026 | 0 |
 | 2 Nov 2026 | 0 |
@@ -48,4 +49,4 @@
 
 </details>
 
-<sub>Updated 5 Nov 2026, 11:35 UTC by [Download stats](https://github.com/nopevbf/oyenza-studio-ex/actions/workflows/metrics.yml), every hour · Data: [downloads](data/downloads.csv), [CI downloads](data/ci-downloads.csv), [stars](data/repo.csv), [summary.json](summary.json)</sub>
+<sub>Updated 5 Nov 2026, 19:02 UTC by [Download stats](https://github.com/nopevbf/oyenza-studio-ex/actions/workflows/metrics.yml), every hour · Data: [downloads](data/downloads.csv), [CI downloads](data/ci-downloads.csv), [stars](data/repo.csv), [summary.json](summary.json)</sub>
