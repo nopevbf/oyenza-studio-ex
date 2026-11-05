@@ -161,7 +161,7 @@ pub fn can_install() -> bool {
     #[cfg(target_os = "macos")]
     let can = installed_bundle().is_some();
     #[cfg(windows)]
-    let can = true;
+    let can = !crate::autostart::packaged();
     can
 }
 

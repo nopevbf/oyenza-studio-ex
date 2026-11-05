@@ -767,11 +767,9 @@ impl App {
             }
             self.try_add_tray();
             services::power::register_session(self.helper);
-            if !crate::autostart::packaged() {
-                self.updater = Some(crate::updates::Updater::start(paths::data_dir().join("update.json"), &mut self.st, crate::updates::unix_now()));
-                self.schedule_update();
-                self.fetch_setup();
-            }
+            self.updater = Some(crate::updates::Updater::start(paths::data_dir().join("update.json"), &mut self.st, crate::updates::unix_now()));
+            self.schedule_update();
+            self.fetch_setup();
         }
         if let Err(e) = dragdrop::register(self.hwnd, self.sink.clone()) {
             pwarn!("drop target registration failed: {e}");
