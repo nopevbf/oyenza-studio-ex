@@ -11,31 +11,27 @@
 > ---
 > 
 > ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.1)
-> Gak cuma sekadar fork kosongan, di versi ini udah disuntik beberapa fitur racikan mantap:
-> - 🔒 **Privacy Dot Indicator (Kamera & Mikrofon - Baru di v1.2.1)**:
->   - Titik privasi hijau cerah (kamera) dan oranye (mic) di sisi kanan Island berbasis Windows CapabilityAccessManager ConsentStore secara *event-driven* (0% CPU at rest).
->   - Prioritas kamera otomatis jika kamera dan mic aktif bersamaan. Dapat diaktifkan/dinonaktifkan di Settings > Appearance.
-> - 👀 **Dynamic Eyes & Idle Glove Wave (Baru di v1.2.1)**:
->   - Tampilan mata pada IdleStyle::Eyes kini memiliki ragam ekspresi emosional acak saat idle (blink, flutter, squint, smile, sleep, sly, read, think).
->   - Saat kursor tidak bergerak selama 30 detik, Island melebar dan sepasang sarung tangan kartun putih muncul melambai menyapa selama 2.5 detik lalu istirahat. Langsung berhenti jika kursor digerakkan.
-> - 🔋 **Battery Status Line (Baru di v1.2.1)**:
->   - Garis tipis 2px di bawah island yang mencerminkan sisa daya baterai laptop secara real-time (hijau/kuning/merah). Dapat diaktifkan lewat Settings > Appearance.
-> - 📅 **Calendar Island Countdown & Event Reminder (Baru di v1.2.0)**:
->   - Countdown otomatis di island tertutup saat jadwal mendekat sisa 3 menit (bisa diatur di Settings: Popups > Calendar countdown).
->   - Tampilan seragam dengan sistem jelang azan: ikon kalender, judul agenda (atau jumlah acara jika bentrok), sisa menit, dan tombol pill **`[OK]`**.
->   - Klik **`[OK]`** untuk menyembunyikan countdown dan mengembalikan island ke tampilan musik/jam sampai waktu jadwal tiba.
->   - Klik badan pill langsung melompat membuka tab **Today**.
->   - Suara *chime* halus saat countdown masuk sisa 3 menit dan saat acara tepat dimulai di menit 0 (disertai pop-up notice).
-> - 🔔 **Living Connectivity Toasts**:
->   - Notifikasi notch dinamis & estetik saat status koneksi berubah!
->   - **Bluetooth**: Deteksi device (headphone, TWS, mouse, gamepad) lengkap dengan display persentase baterai real-time dan animasi *double-pulse ring* warna biru.
->   - **Wi-Fi & Ethernet**: Munculin SSID Wi-Fi aktif atau status kabel LAN pas connect, dan alert merah halus saat disconnect.
-> - 📝 **Inline Task Editing & Reminder**:
->   - Gak perlu lagi ribet hapus terus ketik ulang cuma buat benerin typo to-do list. Klik ikon pensil langsung edit di tempat.
->   - Fitur reminder & timer biar gak lupa kelarin kerjaan.
-> - ⚡ **Cross-Platform & Pipeline Stability**:
->   - Fix build kompatibilitas macOS dan Windows headless Bluetooth test di CI.
->   - Integrasi updater mandiri yang diarahkan langsung ke rilis fork ini.
+> Gak cuma sekadar fork kosongan, di versi **v1.2.1** ini udah disuntik fitur-fitur baru yang bikin notch makin hidup dan informatif:
+> - 🔒 **Privacy Dot Indicator (Kamera & Mikrofon)**:
+>   - Titik privasi hijau cerah (kamera) dan oranye (mikrofon) di sisi kanan Island berbasis Windows *CapabilityAccessManager ConsentStore* secara *event-driven* (0% CPU at rest).
+>   - Prioritas kamera otomatis aktif jika kamera & mic berjalan bersamaan. Dapat diatur lewat **Settings › Appearance**.
+> - 👀 **Dynamic Eyes & Idle Glove Wave**:
+>   - Tampilan mata pada `IdleStyle::Eyes` kini lebih hidup dengan ragam ekspresi emosional acak saat idle (*blink, flutter, squint, smile, sleep, sly, read, think*).
+>   - Saat kursor tidak bergerak selama 30 detik, Island melebar halus dan sepasang sarung tangan kartun putih muncul melambai menyapa (*glove wave*) selama 2.5 detik lalu istirahat. Gerakan mouse langsung membatalkan lambaian seketika.
+> - 🔋 **Battery Status Line**:
+>   - Garis tipis 2px di bawah island yang mencerminkan sisa daya baterai laptop secara real-time (*hijau / kuning / merah*). Otomatis disembunyikan di PC desktop dan dapat diatur lewat **Settings › Appearance**.
+> 
+> ---
+> 
+> <details>
+> <summary>📦 <b>Termasuk semua pembaruan dari versi v1.2.0 dan sebelumnya (Klik untuk lihat detail)</b></summary>
+> 
+> > - 📅 **Calendar Island Countdown & Event Reminder (v1.2.0)**: Countdown otomatis saat jadwal mendekat sisa 3 menit, tombol pill `[OK]` untuk dismiss sementara, direct click ke tab Today, serta sound chime dan start notice.
+> > - 🔔 **Living Connectivity Toasts (v1.1.0)**: Notifikasi notch dinamis saat status koneksi Bluetooth (persentase baterai & animasi pulse ring), Wi-Fi SSID, atau kabel LAN Ethernet berubah.
+> > - 📝 **Inline Task Editing & Reminder**: Edit to-do list langsung di tempat dengan ikon pensil tanpa perlu hapus ulang.
+> > - ⚡ **Cross-Platform & Pipeline Stability**: Kompatibilitas build macOS & Windows CI, serta integrasi update feed mandiri.
+> 
+> </details>
 > 
 > ---
 > 
