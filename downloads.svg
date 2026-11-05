@@ -1,28 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="820" height="410" viewBox="0 0 820 410" role="img" aria-labelledby="title">
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="442" viewBox="0 0 820 442" role="img" aria-labelledby="title">
 <title id="title">Oyenza Studio downloads per release and per day</title>
-<rect width="820" height="410" rx="16" fill="#FFF1DE"/>
+<rect width="820" height="442" rx="16" fill="#FFF1DE"/>
 <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Helvetica, Arial, sans-serif">
-<path d="M86.5,68.0L86.5,128.0" stroke="#D8BF9C" stroke-width="1"/>
-<path d="M46.0,314.5L792.0,314.5" stroke="#EAD7BC" stroke-width="1"/>
-<path d="M46.0,264.5L792.0,264.5" stroke="#EAD7BC" stroke-width="1"/>
-<path d="M46.0,214.5L792.0,214.5" stroke="#EAD7BC" stroke-width="1"/>
-<path d="M46.0,364.5L792.0,364.5" stroke="#D8BF9C" stroke-width="1"/>
+<path d="M86.5,68.0L86.5,160.0" stroke="#D8BF9C" stroke-width="1"/>
+<path d="M46.0,346.5L792.0,346.5" stroke="#EAD7BC" stroke-width="1"/>
+<path d="M46.0,296.5L792.0,296.5" stroke="#EAD7BC" stroke-width="1"/>
+<path d="M46.0,246.5L792.0,246.5" stroke="#EAD7BC" stroke-width="1"/>
+<path d="M46.0,396.5L792.0,396.5" stroke="#D8BF9C" stroke-width="1"/>
 <path d="M87.0,75.0H769.0A4.0,4.0 0 0 1 773.0,79.0V89.0A4.0,4.0 0 0 1 769.0,93.0H87.0Z" fill="#D9661C"/>
-<path d="M87.0,107.0H597.5A4.0,4.0 0 0 1 601.5,111.0V121.0A4.0,4.0 0 0 1 597.5,125.0H87.0Z" fill="#D9661C"/>
-<path d="M87.3,364.0V218.0A4.0,4.0 0 0 1 91.3,214.0H107.3A4.0,4.0 0 0 1 111.3,218.0V364.0Z" fill="#D9661C"/>
-<path d="M193.9,364.0V343.0A4.0,4.0 0 0 1 197.9,339.0H213.9A4.0,4.0 0 0 1 217.9,343.0V364.0Z" fill="#D9661C"/>
+<path d="M87.0,107.0H769.0A4.0,4.0 0 0 1 773.0,111.0V121.0A4.0,4.0 0 0 1 769.0,125.0H87.0Z" fill="#D9661C"/>
+<path d="M87.0,139.0H597.5A4.0,4.0 0 0 1 601.5,143.0V153.0A4.0,4.0 0 0 1 597.5,157.0H87.0Z" fill="#D9661C"/>
+<path d="M80.6,396.0V250.0A4.0,4.0 0 0 1 84.6,246.0H100.6A4.0,4.0 0 0 1 104.6,250.0V396.0Z" fill="#D9661C"/>
+<path d="M173.9,396.0V375.0A4.0,4.0 0 0 1 177.9,371.0H193.9A4.0,4.0 0 0 1 197.9,375.0V396.0Z" fill="#D9661C"/>
+<path d="M733.4,396.0V300.0A4.0,4.0 0 0 1 737.4,296.0H753.4A4.0,4.0 0 0 1 757.4,300.0V396.0Z" fill="#D9661C"/>
 <text x="28.0" y="44.0" font-size="16" fill="#2B1B10" font-weight="600">Downloads per release</text>
-<text x="77.0" y="88.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">1.1.0</text>
+<text x="77.0" y="88.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">1.2.0</text>
 <text x="781.0" y="88.5" font-size="14" fill="#2B1B10" font-weight="600">4</text>
-<text x="77.0" y="120.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">0.2.14</text>
-<text x="609.5" y="120.5" font-size="14" fill="#2B1B10" font-weight="600">3</text>
-<text x="28.0" y="176.0" font-size="16" fill="#2B1B10" font-weight="600">Downloads per day</text>
-<text x="738.7" y="357.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">0</text>
-<text x="99.3" y="207.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">6</text>
-<text x="36.0" y="368.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">0</text>
-<text x="36.0" y="318.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">2</text>
-<text x="36.0" y="268.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">4</text>
-<text x="36.0" y="218.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">6</text>
-<text x="738.7" y="384.0" font-size="12" fill="#7A6450" text-anchor="middle">4 Nov</text>
+<text x="77.0" y="120.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">1.1.0</text>
+<text x="781.0" y="120.5" font-size="14" fill="#2B1B10" font-weight="600">4</text>
+<text x="77.0" y="152.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">0.2.14</text>
+<text x="609.5" y="152.5" font-size="14" fill="#2B1B10" font-weight="600">3</text>
+<text x="28.0" y="208.0" font-size="16" fill="#2B1B10" font-weight="600">Downloads per day</text>
+<text x="745.4" y="289.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">4</text>
+<text x="92.6" y="239.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">6</text>
+<text x="36.0" y="400.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">0</text>
+<text x="36.0" y="350.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">2</text>
+<text x="36.0" y="300.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">4</text>
+<text x="36.0" y="250.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">6</text>
+<text x="745.4" y="416.0" font-size="12" fill="#7A6450" text-anchor="middle">5 Nov</text>
+<text x="92.6" y="416.0" font-size="12" fill="#7A6450" text-anchor="middle">29 Oct</text>
 </g>
 </svg>
