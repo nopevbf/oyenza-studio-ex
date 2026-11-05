@@ -92,6 +92,7 @@ pub fn geom(a: Activity, st: &AppState) -> Option<Geom> {
         Activity::Timer => TIMER_W,
         Activity::MediaTimer => MEDIA_TIMER_W,
         Activity::Prayer => prayer_w(st),
+        Activity::Calendar => calendar_w(st),
         Activity::Game => game_w(st),
         Activity::Recording if st.rec_elapsed() >= 3600.0 => TIMER_LONG_W,
         Activity::Recording => TIMER_W,
@@ -107,6 +108,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, a: Activity, body: Rect) -> bool {
         Activity::Timer => draw_timer(ui, st, body),
         Activity::MediaTimer => draw_media_timer(ui, st, body),
         Activity::Prayer => draw_prayer(ui, st, body),
+        Activity::Calendar => draw_calendar(ui, st, body),
         Activity::Game => draw_game(ui, st, body),
         Activity::Recording => draw_recording(ui, st, body),
         Activity::Download => draw_download(ui, st, body),
@@ -291,6 +293,25 @@ pub(crate) fn moon(ui: &mut Ui, c: Point, d: f32, col: Color) {
         Seg::Close,
     ];
     ui.c.path(&segs, Some(col), None);
+}
+
+fn draw_calendar(ui: &mut Ui, st: &AppState, body: Rect) {
+    let Some(cd) = crate::activities::calendar_countdown(st) else { return };
+    let col = st.accent;
+    let ts = prayer_style(col);
+    let text = format!("{} {} min", cd.title, cd.left_min);
+    let (tw, _) = ui.c.measure(&text, &ts, 400.0);
+    let end = crate::activities::draw_calendar_ok(ui, body);
+    let content = 16.0 + 8.0 + tw;
+    let x0 = ((body.x + GLYPH_INSET + end) / 2.0 - content / 2.0).max(body.x + GLYPH_INSET);
+    ui.c.icon(Icon::Calendar, Rect::new(x0, body.center().y - 8.0, 16.0, 16.0), col);
+    ui.c.text(&text, Rect::new(x0 + 16.0 + 8.0, body.y, tw + 2.0, body.h), &ts);
+}
+
+fn calendar_w(st: &AppState) -> f32 {
+    let Some(cd) = crate::activities::calendar_countdown(st) else { return 160.0 };
+    let text = format!("{} {} min", cd.title, cd.left_min);
+    (GLYPH_INSET + 16.0 + 8.0 + 7.5 * text.chars().count() as f32 + PRAYER_OK_ROOM).clamp(140.0, 260.0).ceil()
 }
 
 fn draw_prayer(ui: &mut Ui, st: &AppState, body: Rect) {

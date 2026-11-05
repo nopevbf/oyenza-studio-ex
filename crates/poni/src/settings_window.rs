@@ -259,6 +259,7 @@ pub enum Key {
     PrayerSound,
     PrayerCountdown,
     PrayerPause,
+    CalendarCountdown,
     PrayerFollow,
     AiNotices,
     AiNear,
@@ -447,15 +448,26 @@ pub fn blocks(section: Section, st: &AppState) -> Vec<Block> {
             ),
             Block::Group(Some("Closed island"), vec![switch(Key::MediaActivity, "Show what's playing", Some("The song and its cover on the closed island"), s.show_media_activity)]),
         ],
-        Section::Popups => vec![Block::Group(
-            Some("The island shows a pop-up for"),
+        Section::Popups => {
+            let cal_cd = if s.calendar_remind_min == 0 { "Off".to_string() } else { minutes(s.calendar_remind_min) };
             vec![
-                switch(Key::HudVolume, "Volume", Some("When you change the volume or mute"), s.hud_volume),
-                switch(Key::HudPower, "Charger and battery", Some("When you plug in, unplug or run low"), s.hud_power),
-                switch(Key::HudBluetooth, "Bluetooth", Some("When headphones and other devices connect"), s.hud_bluetooth),
-                switch(Key::ConnectivityToasts, "Connectivity toasts", Some("When Bluetooth, Wi-Fi or Ethernet connects or drops"), s.connectivity_toasts),
-            ],
-        )],
+                Block::Group(
+                    Some("The island shows a pop-up for"),
+                    vec![
+                        switch(Key::HudVolume, "Volume", Some("When you change the volume or mute"), s.hud_volume),
+                        switch(Key::HudPower, "Charger and battery", Some("When you plug in, unplug or run low"), s.hud_power),
+                        switch(Key::HudBluetooth, "Bluetooth", Some("When headphones and other devices connect"), s.hud_bluetooth),
+                        switch(Key::ConnectivityToasts, "Connectivity toasts", Some("When Bluetooth, Wi-Fi or Ethernet connects or drops"), s.connectivity_toasts),
+                    ],
+                ),
+                Block::Group(
+                    Some("Calendar"),
+                    vec![
+                        item(Key::CalendarCountdown, "Countdown before events", Some("On the closed island"), Ctl::Stepper(cal_cd)),
+                    ],
+                ),
+            ]
+        }
         Section::Tabs => {
             let pages = start_pages(st);
             let start = PageKind::from_key(&s.start_page);
@@ -626,6 +638,7 @@ pub fn apply(st: &mut AppState, key: Key, act: Act) {
             _ => return,
         },
         Key::PrayerCountdown => s.prayer.remind_before_min = step_min(s.prayer.remind_before_min, step, 0, 60),
+        Key::CalendarCountdown => s.calendar_remind_min = step_min(s.calendar_remind_min, step, 0, 60),
         Key::PrayerPause => s.prayer.pause_music = !s.prayer.pause_music,
         Key::PrayerFollow => s.prayer.follow_location = !s.prayer.follow_location,
         Key::AiNotices => s.usage.notices = !s.usage.notices,

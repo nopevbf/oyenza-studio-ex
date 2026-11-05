@@ -6,12 +6,18 @@
 > Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
 > 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
 > 
-> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.1.0**, berisi patch & fitur tambahan di atas vanilla release tersebut.
+> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.0**, berisi patch & fitur tambahan di atas vanilla release tersebut.
 > 
 > ---
 > 
-> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.1.0)
+> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.0)
 > Gak cuma sekadar fork kosongan, di versi ini udah disuntik beberapa fitur racikan mantap:
+> - 📅 **Calendar Island Countdown & Event Reminder (Baru di v1.2.0)**:
+>   - Countdown otomatis di island tertutup saat jadwal mendekat sisa 3 menit (bisa diatur di Settings: Popups > Calendar countdown).
+>   - Tampilan seragam dengan sistem jelang azan: ikon kalender, judul agenda (atau jumlah acara jika bentrok), sisa menit, dan tombol pill **`[OK]`**.
+>   - Klik **`[OK]`** untuk menyembunyikan countdown dan mengembalikan island ke tampilan musik/jam sampai waktu jadwal tiba.
+>   - Klik badan pill langsung melompat membuka tab **Today**.
+>   - Suara *chime* halus saat countdown masuk sisa 3 menit dan saat acara tepat dimulai di menit 0 (disertai pop-up notice).
 > - 🔔 **Living Connectivity Toasts**:
 >   - Notifikasi notch dinamis & estetik saat status koneksi berubah!
 >   - **Bluetooth**: Deteksi device (headphone, TWS, mouse, gamepad) lengkap dengan display persentase baterai real-time dan animasi *double-pulse ring* warna biru.

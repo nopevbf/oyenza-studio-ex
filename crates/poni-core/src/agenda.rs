@@ -577,6 +577,85 @@ pub fn sample(today: &str, now_min: i32) -> Answer {
     }
 }
 
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CalendarCountdown {
+    pub title: String,
+    pub at: i64,
+    pub left_min: i64,
+    pub event_count: usize,
+}
+
+/// Calculate event's start unix timestamp from local day key, seconds from local midnight, and now_unix.
+pub fn event_start_unix(today_key: &str, local_sec_of_day: i64, now_unix: i64, start_str: &str) -> Option<i64> {
+    let days_diff = day_num(start_str)? - day_num(today_key)?;
+    let start_sec_of_day = hm(start_str.get(11..16)?)? as i64 * 60;
+    let diff_sec = days_diff * 86400 + start_sec_of_day - local_sec_of_day;
+    Some(now_unix + diff_sec)
+}
+
+/// Find the earliest upcoming timed event within `remind_before_min` minutes.
+pub fn countdown(
+    events: &[Event],
+    today_key: &str,
+    local_sec_of_day: i64,
+    now_unix: i64,
+    remind_before_min: u32,
+) -> Option<CalendarCountdown> {
+    if remind_before_min == 0 {
+        return None;
+    }
+    let max_sec = remind_before_min as i64 * 60;
+    let mut upcoming: Vec<(i64, String)> = Vec::new();
+
+    for e in events {
+        if e.all_day {
+            continue;
+        }
+        let Some(at) = event_start_unix(today_key, local_sec_of_day, now_unix, &e.start) else {
+            continue;
+        };
+        let diff_sec = at - now_unix;
+        if diff_sec > 0 && diff_sec <= max_sec {
+            let title = one_line(&e.title);
+            upcoming.push((at, title));
+        }
+    }
+
+    if upcoming.is_empty() {
+        return None;
+    }
+
+    upcoming.sort_by_key(|(at, _)| *at);
+    let earliest_at = upcoming[0].0;
+    let matching: Vec<&str> = upcoming
+        .iter()
+        .filter(|(at, _)| *at == earliest_at)
+        .map(|(_, title)| title.as_str())
+        .collect();
+
+    let diff_sec = earliest_at - now_unix;
+    let left_min = (diff_sec + 59) / 60;
+    let event_count = matching.len();
+    let title = if event_count > 1 {
+        format!("{event_count} events")
+    } else {
+        let t = matching[0];
+        if t.is_empty() {
+            "Busy".to_string()
+        } else {
+            t.to_string()
+        }
+    };
+
+    Some(CalendarCountdown {
+        title,
+        at: earliest_at,
+        left_min,
+        event_count,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -861,4 +940,61 @@ mod tests {
         let late = weeks(&sample(TODAY, 22 * 60), &[], "", TODAY, 22 * 60, false, None);
         assert!(late.focus.is_some() && late.days[0].rows.is_empty());
     }
+
+    #[test]
+    fn calendar_countdown_bva_and_ep_tests() {
+        let ev1 = event("Design Review", "2026-10-26 10:00", "2026-10-26 11:00");
+        let now_unix = 1792994400; // Base unix time
+        let sec_at_09_57 = 9 * 3600 + 57 * 60;
+        let cd = countdown(&[ev1.clone()], "2026-10-26", sec_at_09_57, now_unix, 3);
+        assert_eq!(cd, Some(CalendarCountdown {
+            title: "Design Review".into(),
+            at: now_unix + 180,
+            left_min: 3,
+            event_count: 1,
+        }));
+
+        // BVA: 181s left (09:56:59) -> None
+        let cd_181 = countdown(&[ev1.clone()], "2026-10-26", sec_at_09_57 - 1, now_unix, 3);
+        assert_eq!(cd_181, None);
+
+        // BVA: 60s left (09:59:00) -> left_min = 1
+        let sec_at_09_59 = 9 * 3600 + 59 * 60;
+        let cd_60 = countdown(&[ev1.clone()], "2026-10-26", sec_at_09_59, now_unix, 3);
+        assert_eq!(cd_60.as_ref().map(|c| c.left_min), Some(1));
+
+        // BVA: 1s left (09:59:59) -> left_min = 1
+        let cd_1 = countdown(&[ev1.clone()], "2026-10-26", sec_at_09_59 + 59, now_unix, 3);
+        assert_eq!(cd_1.as_ref().map(|c| c.left_min), Some(1));
+
+        // BVA: 0s left (10:00:00, started) -> None
+        let cd_0 = countdown(&[ev1.clone()], "2026-10-26", 10 * 3600, now_unix, 3);
+        assert_eq!(cd_0, None);
+
+        // EP: All-day event -> Ignored
+        let all_day = Event {
+            title: "Holiday".into(),
+            start: "2026-10-26".into(),
+            end: "2026-10-27".into(),
+            all_day: true,
+            place: None,
+            join: None,
+            link: None,
+        };
+        assert_eq!(countdown(&[all_day], "2026-10-26", sec_at_09_57, now_unix, 3), None);
+
+        // EP: Conflicting events at same time -> "2 events"
+        let ev2 = event("Sprint Sync", "2026-10-26 10:00", "2026-10-26 10:30");
+        let cd_multi = countdown(&[ev1.clone(), ev2], "2026-10-26", sec_at_09_57, now_unix, 3);
+        assert_eq!(cd_multi, Some(CalendarCountdown {
+            title: "2 events".into(),
+            at: now_unix + 180,
+            left_min: 3,
+            event_count: 2,
+        }));
+
+        // EP: remind_before_min == 0 (disabled) -> None
+        assert_eq!(countdown(&[ev1], "2026-10-26", sec_at_09_57, now_unix, 0), None);
+    }
 }
+

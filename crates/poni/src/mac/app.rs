@@ -1961,6 +1961,61 @@ impl App {
         }
     }
 
+    fn calendar_countdown_ok(&mut self) {
+        self.refresh_time();
+        if let Some(cd) = self.st.calendar_countdown_ok() {
+            pinfo!("calendar: countdown put away until {} at {}", cd.title, cd.at);
+        }
+    }
+
+    fn calendar_tick(&mut self) {
+        if self.st.settings.calendar_remind_min == 0 {
+            return;
+        }
+        let today = self.st.local.day_key();
+        let local_sec = self.st.local.hour as i64 * 3600 + self.st.local.minute as i64 * 60 + self.st.local.second as i64;
+        let now_unix = self.st.unix;
+
+        let mut chime_at = None;
+        let mut started_event = None;
+
+        if let Some(agenda) = self.st.oyenza.agenda.as_ref() {
+            // 1. Chime when entering countdown window
+            if let Some(cd) = poni_core::agenda::countdown(&agenda.events, &today, local_sec, now_unix, self.st.settings.calendar_remind_min) {
+                if self.st.oyenza.calendar_remind_chime != Some(cd.at) {
+                    chime_at = Some(cd.at);
+                }
+            }
+
+            // 2. Event start notice (menit 0)
+            for e in &agenda.events {
+                if e.all_day {
+                    continue;
+                }
+                if let Some(at) = poni_core::agenda::event_start_unix(&today, local_sec, now_unix, &e.start) {
+                    if now_unix >= at && now_unix < at + 60 {
+                        if self.st.oyenza.calendar_started_notified != Some(at) {
+                            started_event = Some((at, e.title.clone()));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(at) = chime_at {
+            self.st.oyenza.calendar_remind_chime = Some(at);
+            self.st.chime();
+        }
+
+        if let Some((at, title)) = started_event {
+            self.st.oyenza.calendar_started_notified = Some(at);
+            let notice_title = format!("Event started: {title}");
+            self.st.notify(Icon::Calendar, self.st.accent, notice_title, "From Google Calendar", 6.0, Some(NoticeAction::OpenPage(PageKind::Today)));
+            self.st.chime();
+        }
+    }
+
     fn adzan_ended(&mut self) {
         self.adzan.stop();
         self.st.prayer.adzan = false;
@@ -2276,6 +2331,9 @@ impl App {
                         // The prayer countdown's OK, the same way.
                         self.input.pressed_id = None;
                         self.prayer_countdown_ok();
+                    } else if self.input.pressed_id == Some(wid(activities::CALENDAR_OK_ID)) {
+                        self.input.pressed_id = None;
+                        self.calendar_countdown_ok();
                     } else {
                         // Clicking a notice jumps to its page (a new version's
                         // may be waiting under a volume change or a game's readout).
@@ -2293,6 +2351,9 @@ impl App {
                                 }
                                 None => {}
                             }
+                        }
+                        if self.mode == Mode::Activity(activities::Activity::Calendar) {
+                            self.st.page = PageKind::Today;
                         }
                         self.st.hud = None;
                         self.expand();
@@ -3335,6 +3396,7 @@ impl App {
         }
         self.script_held = held;
         self.prayer_tick();
+        self.calendar_tick();
         self.ielts_tick();
         self.notes_tick();
         self.check_recorder_alive(false);

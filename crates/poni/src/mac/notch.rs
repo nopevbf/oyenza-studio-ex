@@ -179,7 +179,7 @@ fn ear(m: &Mode, st: &AppState) -> f32 {
             }
         }
         // "10 min" in the right ear.
-        Mode::Activity(Activity::Prayer) => 66.0,
+        Mode::Activity(Activity::Prayer) | Mode::Activity(Activity::Calendar) => 66.0,
         // Meeting notes: Oyen in the left ear; the dot and "12:34", or
         // "Writing…", in the right.
         Mode::Activity(Activity::Notes) => 80.0,
@@ -337,6 +337,14 @@ pub fn draw_ears(ui: &mut Ui, st: &mut AppState, m: &Mode, body: Rect, n: Notch)
             ui.c.icon(Icon::Moon, Rect::from_center(Point::new(left.center().x + 6.0, body.center().y), 16.0, 16.0), col);
             let ts = TextStyle::body().weight(Weight::Semibold).tabular().color(col).center();
             ui.c.text(&format!("{mins} min"), Rect::new(right.x, body.y, right.w - 6.0, body.h), &ts);
+            true
+        }
+        Mode::Activity(Activity::Calendar) => {
+            let Some(cd) = activities::calendar_countdown(st) else { return true };
+            let col = st.accent;
+            ui.c.icon(Icon::Calendar, Rect::from_center(Point::new(left.center().x + 6.0, body.center().y), 16.0, 16.0), col);
+            let ts = TextStyle::body().weight(Weight::Semibold).tabular().color(col).center();
+            ui.c.text(&format!("{} min", cd.left_min), Rect::new(right.x, body.y, right.w - 6.0, body.h), &ts);
             true
         }
         // A screen recording: its dot left of the camera, its time right.

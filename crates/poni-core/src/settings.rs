@@ -132,6 +132,8 @@ pub struct Settings {
     pub notifications: crate::notifications::NotificationSettings,
     /// How Oyen talks on the IELTS page (Sopan, Gaul or Ngegas, the default).
     pub ielts_spice: Spice,
+    /// Minutes before a calendar event the island counts down (0 = no countdown).
+    pub calendar_remind_min: u32,
 }
 
 /// What the AI tab shows and whether it gives heads-up notices.
@@ -253,6 +255,7 @@ impl Default for Settings {
             record: RecordSettings::default(),
             notifications: crate::notifications::NotificationSettings::default(),
             ielts_spice: Spice::default(),
+            calendar_remind_min: 3,
         }
     }
 }
@@ -345,6 +348,7 @@ impl Settings {
         p.long_break_min = p.long_break_min.clamp(1, 120);
         p.long_every = p.long_every.min(12);
         self.prayer.remind_before_min = self.prayer.remind_before_min.min(60);
+        self.calendar_remind_min = self.calendar_remind_min.min(60);
         self
     }
 }

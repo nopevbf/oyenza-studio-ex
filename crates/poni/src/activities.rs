@@ -28,6 +28,8 @@ pub enum Activity {
     MediaTimer,
     /// Prayer times: the minutes before the next prayer.
     Prayer,
+    /// Calendar events: the minutes before the next event.
+    Calendar,
     /// Show over games: frame rate, GPU and CPU while a full-screen app is in front.
     Game,
     /// A screen recording with Oyenza Studio Recorder: its dot and time.
@@ -101,6 +103,8 @@ const PRAYER_OK_H: f32 = 24.0;
 const PRAYER_OK_INSET: f32 = (32.0 - PRAYER_OK_H) / 2.0;
 /// What the OK takes at the pill's right end, from where the words end.
 pub(crate) const PRAYER_OK_ROOM: f32 = 12.0 + PRAYER_OK_W + PRAYER_OK_INSET;
+const CALENDAR_W: f32 = 152.0 + PRAYER_OK_ROOM;
+pub(crate) const CALENDAR_OK_ID: &str = "calendar.ok";
 /// The readout over games: room for "999 fps", "GPU 100% · 100°" and
 /// "CPU 100%" with dividers (tabular digits keep it still as numbers
 /// change), and without the temperature when the driver reports none.
@@ -131,7 +135,8 @@ pub fn content_key(m: &Mode) -> u32 {
         Mode::Activity(Activity::Timer) => 3,
         Mode::Activity(Activity::MediaTimer) => 4,
         Mode::Activity(Activity::Prayer) => 5,
-        Mode::Activity(Activity::Game) => 6,
+        Mode::Activity(Activity::Calendar) => 6,
+        Mode::Activity(Activity::Game) => 7,
         Mode::Activity(Activity::Recording) => 7,
         Mode::Activity(Activity::Download) => 8,
         Mode::Activity(Activity::Notes) => 9,
@@ -175,6 +180,14 @@ pub fn prayer_countdown(st: &AppState) -> Option<(poni_core::prayer::Prayer, i64
         .map(|(m, left)| (m.prayer, left))
 }
 
+pub fn calendar_countdown(st: &AppState) -> Option<poni_core::agenda::CalendarCountdown> {
+    let agenda = st.oyenza.agenda.as_ref()?;
+    let today = st.local.day_key();
+    let local_sec = st.local.hour as i64 * 3600 + st.local.minute as i64 * 60 + st.local.second as i64;
+    poni_core::agenda::countdown(&agenda.events, &today, local_sec, st.unix, st.settings.calendar_remind_min)
+        .filter(|cd| st.oyenza.calendar_countdown_ok != Some(cd.at))
+}
+
 pub fn current_activity(st: &AppState) -> Option<Activity> {
     // A recording comes first: its Stop must be one click away.
     if st.rec_live() && st.record_on() {
@@ -187,6 +200,9 @@ pub fn current_activity(st: &AppState) -> Option<Activity> {
     // The few minutes before a prayer come next: they don't come back.
     if prayer_countdown(st).is_some() {
         return Some(Activity::Prayer);
+    }
+    if calendar_countdown(st).is_some() {
+        return Some(Activity::Calendar);
     }
     // Over a game the readout takes the pill; music and timer wait.
     if st.game.active {
@@ -312,6 +328,7 @@ pub fn geom(m: &Mode, st: &AppState) -> Geom {
         }
         Mode::Activity(Activity::MediaTimer) => Geom::new(132.0, 32.0, 15.0),
         Mode::Activity(Activity::Prayer) => Geom::new(PRAYER_W, 32.0, 15.0),
+        Mode::Activity(Activity::Calendar) => Geom::new(CALENDAR_W, 32.0, 15.0),
         Mode::Activity(Activity::Game) => Geom::new(if game_temp(st).is_some() { GAME_W } else { GAME_NO_TEMP_W }, 32.0, 15.0),
         Mode::Activity(Activity::Recording) => Geom::new(recording_w(st), 32.0, 15.0),
         Mode::Activity(Activity::Download) => Geom::new(if download_many(st) { DOWNLOAD_MANY_W } else { DOWNLOAD_W }, 32.0, 15.0),
@@ -649,6 +666,15 @@ fn draw_activity(ui: &mut Ui, st: &mut AppState, a: Activity, body: Rect) {
             let end = draw_prayer_ok(ui, body);
             ui.c.text(&text, Rect::new(body.x + 36.0, body.y, end - body.x - 36.0, body.h), &ts);
         }
+        Activity::Calendar => {
+            let Some(cd) = calendar_countdown(st) else { return };
+            let col = st.accent;
+            ui.c.icon(Icon::Calendar, Rect::new(body.x + 14.0, cy - 8.0, 16.0, 16.0), col);
+            let text = format!("{} {} min", cd.title, cd.left_min);
+            let ts = TextStyle::body().weight(Weight::Semibold).tabular().color(col).right();
+            let end = draw_calendar_ok(ui, body);
+            ui.c.text(&text, Rect::new(body.x + 36.0, body.y, end - body.x - 36.0, body.h), &ts);
+        }
         Activity::Game => draw_game(ui, st, body),
         Activity::Recording => draw_recording(ui, st, body),
         Activity::Download => draw_download(ui, st, body),
@@ -676,6 +702,12 @@ fn draw_activity(ui: &mut Ui, st: &mut AppState, a: Activity, body: Rect) {
 pub(crate) fn draw_prayer_ok(ui: &mut Ui, body: Rect) -> f32 {
     let r = Rect::new(body.right() - PRAYER_OK_INSET - PRAYER_OK_W, body.center().y - PRAYER_OK_H / 2.0, PRAYER_OK_W, PRAYER_OK_H);
     ui.pill(wid(PRAYER_OK_ID), r, "OK", None, PillStyle::Utility);
+    body.right() - PRAYER_OK_ROOM
+}
+
+pub(crate) fn draw_calendar_ok(ui: &mut Ui, body: Rect) -> f32 {
+    let r = Rect::new(body.right() - PRAYER_OK_INSET - PRAYER_OK_W, body.center().y - PRAYER_OK_H / 2.0, PRAYER_OK_W, PRAYER_OK_H);
+    ui.pill(wid(CALENDAR_OK_ID), r, "OK", None, PillStyle::Utility);
     body.right() - PRAYER_OK_ROOM
 }
 
@@ -1183,6 +1215,52 @@ mod tests {
         st.prayer.clock_shift = times.maghrib - 5 * 60 - st.unix;
         assert_eq!(prayer_countdown(&st), Some((Prayer::Maghrib, 5)));
         assert_eq!(collapsed_mode(&st), Mode::Activity(Activity::Prayer));
+    }
+
+    #[test]
+    fn ok_on_the_calendar_countdown_gives_the_island_back_until_that_event() {
+        use poni_core::agenda::{Answer, Event, Sources, Source};
+        let mut st = AppState::new(Settings::default(), Store::default());
+        let today = "2026-10-26";
+        st.local = poni_core::datetime::LocalDateTime {
+            year: 2026,
+            month: 10,
+            day: 26,
+            hour: 9,
+            minute: 58,
+            second: 0,
+        };
+        st.unix = 1792994400;
+        let ev = Event {
+            title: "Sprint Review".into(),
+            start: "2026-10-26 10:00".into(),
+            end: "2026-10-26 11:00".into(),
+            all_day: false,
+            place: None,
+            join: None,
+            link: None,
+        };
+        st.oyenza.agenda = Some(Answer {
+            day: today.into(),
+            apps: Sources { googlecalendar: Source::On, gmail: Source::Off },
+            events: vec![ev],
+            flights: vec![],
+            days: 1,
+            through: None,
+            weeks: None,
+        });
+
+        // Countdown is active (2 minutes left)
+        let cd = calendar_countdown(&st).expect("countdown active");
+        assert_eq!(cd.left_min, 2);
+        assert_eq!(cd.title, "Sprint Review");
+        assert_eq!(collapsed_mode(&st), Mode::Activity(Activity::Calendar));
+
+        // Click OK -> dismisses countdown
+        let dismissed = st.calendar_countdown_ok();
+        assert!(dismissed.is_some());
+        assert_eq!(calendar_countdown(&st), None);
+        assert_eq!(collapsed_mode(&st), Mode::Idle);
     }
 
     #[test]

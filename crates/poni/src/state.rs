@@ -486,6 +486,12 @@ pub struct OyenzaState {
     /// Whether the account has Studio Pro, as the server last said (None:
     /// not asked yet). Signing out forgets it with the rest.
     pub pro: Option<bool>,
+    /// Calendar countdown dismissed for the event starting at this unix timestamp.
+    pub calendar_countdown_ok: Option<i64>,
+    /// The event start timestamp for which the 0-minute start notice was already shown.
+    pub calendar_started_notified: Option<i64>,
+    /// The event start timestamp for which the reminder chime already played.
+    pub calendar_remind_chime: Option<i64>,
 }
 
 
@@ -1075,6 +1081,17 @@ impl AppState {
         let (m, _) = poni_core::prayer::countdown(&site, self.prayer_now(), self.settings.prayer.remind_before_min)?;
         self.prayer.countdown_ok = Some(m.at);
         Some(m)
+    }
+
+    /// OK on the countdown before a calendar event: it goes away until that event's
+    /// start time. Returns the countdown put away (none when no countdown runs).
+    pub fn calendar_countdown_ok(&mut self) -> Option<poni_core::agenda::CalendarCountdown> {
+        let agenda = self.oyenza.agenda.as_ref()?;
+        let today = self.local.day_key();
+        let local_sec = self.local.hour as i64 * 3600 + self.local.minute as i64 * 60 + self.local.second as i64;
+        let cd = poni_core::agenda::countdown(&agenda.events, &today, local_sec, self.unix, self.settings.calendar_remind_min)?;
+        self.oyenza.calendar_countdown_ok = Some(cd.at);
+        Some(cd)
     }
 
     /// New steps from the phone (`None`: none to show), kept in memory only,
