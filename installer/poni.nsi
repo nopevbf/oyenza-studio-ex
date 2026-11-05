@@ -31,7 +31,7 @@ InstallDir "$LOCALAPPDATA\Programs\Poni"
 InstallDirRegKey HKCU "Software\Poni" "InstallDir"
 BrandingText "${APPNAME} ${VERSION}"
 
-VIProductVersion "1.2.3.0"
+VIProductVersion "1.2.4.0"
 VIAddVersionKey "ProductName" "${APPNAME}"
 VIAddVersionKey "CompanyName" "${PUBLISHER}"
 VIAddVersionKey "FileDescription" "Oyenza Studio installer"
