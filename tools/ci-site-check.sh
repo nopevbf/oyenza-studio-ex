@@ -121,6 +121,7 @@ issue_body() {
 [v$version]($SERVER/$REPO/releases/tag/v$version) is published, but [the website]($(page_url)) still describes ${page:-an older version}. Every release updates the website too ([AGENTS.md]($SERVER/$REPO/blob/main/AGENTS.md#every-release-updates-the-website)):
 
 - [ ] \`<span data-release="version">\` in \`site/index.html\` says $version, and the size next to it is right
+- [ ] \`site/latest.json\` is signed and updated for $version (\`tools/make_update_feed.py\`)
 - [ ] a "New in $version" section for each change people will notice
 - [ ] copy this release makes out of date, such as "coming soon" lines
 - [ ] screenshots this release changed (\`tools/site_shots.py\`)

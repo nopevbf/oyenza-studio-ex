@@ -652,7 +652,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       issues: write
       actions: write
     steps:
@@ -665,6 +665,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: tools/ci-site-check.sh release "$GITHUB_REF_NAME"
+      - name: Auto-update site/latest.json feed on main
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATE_FEED_KEY: ${{ secrets.UPDATE_FEED_KEY }}
+        run: |
+          if [ -n "$UPDATE_FEED_KEY" ]; then
+            python3 tools/make_update_feed.py site/latest.json --released "$PONI_VERSION"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add site/latest.json
+            if ! git diff --cached --quiet; then
+              git commit -m "fix(updates): automatically update latest.json feed for v$PONI_VERSION [skip ci]"
+              git push origin main
+            fi
+          fi
       - name: What a tag would do to the website (dry run, nothing changes)
         if: github.event_name != 'push'
         run: |
