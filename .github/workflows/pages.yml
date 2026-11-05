@@ -62,7 +62,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASED: ${{ inputs.released }}
           UPDATE_FEED_KEY: ${{ secrets.UPDATE_FEED_KEY }}
-        run: python3 tools/make_update_feed.py latest.json ${RELEASED:+--released "$RELEASED"}
+        run: |
+          if [ -n "$UPDATE_FEED_KEY" ]; then
+            python3 tools/make_update_feed.py latest.json ${RELEASED:+--released "$RELEASED"}
+          elif [ -f site/latest.json ]; then
+            echo "::notice::UPDATE_FEED_KEY secret not found in release environment. Using committed site/latest.json as fallback."
+            cp site/latest.json latest.json
+          else
+            echo "::error::UPDATE_FEED_KEY not set and site/latest.json missing."
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: update-feed

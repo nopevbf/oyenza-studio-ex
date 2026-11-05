@@ -1,3 +1,4 @@
+import shutil
 #!/usr/bin/env python3
 """Write latest.json, the file every copy of Oyenza Studio reads to learn that
 a new version is out (docs/updates.md). The Website workflow publishes it as
@@ -38,7 +39,7 @@ import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEYS = os.path.join(ROOT, "crates", "poni-core", "data", "update-keys.txt")
-REPO = os.environ.get("GITHUB_REPOSITORY") or "lucacadalora/oyenza-studio"
+REPO = os.environ.get("GITHUB_REPOSITORY") or "nopevbf/oyenza-studio-ex"
 API = "https://api.github.com/repos/" + REPO
 SCHEMA = 1
 # The app shows the headline on the island, one line: keep it short.
@@ -162,8 +163,19 @@ def trusted_keys():
     return keys
 
 
+def find_openssl():
+    w = shutil.which("openssl")
+    if w:
+        return w
+    git_openssl = r"C:\Program Files\Git\usr\bin\openssl.exe"
+    if os.path.exists(git_openssl):
+        return git_openssl
+    return "openssl"
+
+
 def openssl(*args, data=None):
-    r = subprocess.run(["openssl", *args], input=data, capture_output=True)
+    cmd = find_openssl()
+    r = subprocess.run([cmd, *args], input=data, capture_output=True)
     if r.returncode != 0:
         die(f"openssl {args[0]} failed: {r.stderr.decode(errors='replace').strip()}")
     return r.stdout
