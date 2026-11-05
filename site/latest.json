@@ -1,6 +1,6 @@
 {
   "about": "Oyenza Studio's update file. payload is signed (ECDSA P-256, SHA-256) with the key named by key; see docs/updates.md.",
-  "payload": "{\"schema\":1,\"version\":\"1.2.3\",\"date\":\"2026-11-05\",\"headline\":\"Media Foundation & WASAPI Privacy Sensors, Visual Glow Refinement, and Automated Update Feed:\",\"notes\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.3\",\"windows\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.3/Oyenza-Studio-Setup-1.2.3.exe\",\"size\":2718765,\"sha256\":\"72eecb2d64b4e116199efd1bcd59c168402960377e711abc9cd3b3229c0c30d9\"},\"mac\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.3/Oyenza-Studio-1.2.3-mac.dmg\",\"size\":5267340,\"sha256\":\"c04933dd0cdda8e4ff276bd03d3234f3c8723f41aac242c44e61816dac6de12e\"}}",
-  "signature": "xoTrVvNaQe1zW57t4HTb2/FfV5blIt+XMYpbXU1TSqczJLfcRN/kGZhojQ1dowbOJ2PFC3cK5o62I0WEZnr+Vw==",
+  "payload": "{\"schema\":1,\"version\":\"1.2.3\",\"date\":\"2026-11-05\",\"headline\":\"Media Foundation & WASAPI Privacy Sensors, Visual Glow Refinement, and Automated Update…\",\"notes\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.3\",\"windows\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.3/Oyenza-Studio-Setup-1.2.3.exe\",\"size\":2722051,\"sha256\":\"f9ff292824085187159b71292e346febf1f37aac99e4b73f3f12827143237beb\"}}",
+  "signature": "RnJTzohas4JgIzFNQoPLjALJaugaRhQ7JDUcjWDrwoEpUJVVAYJ/v3FJd+LdT+wSjMdq5jS3QERnZ9alf8sMKA==",
   "key": "f62e3707a88cbc9a"
 }
