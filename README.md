@@ -6,32 +6,32 @@
 > Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
 > 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
 > 
-> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.3**, berisi patch & fitur tambahan di atas vanilla release tersebut.
+> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.4**, berisi patch & fitur tambahan di atas vanilla release tersebut.
 > 
 > ---
 > 
-> > > ### ✨ Apa Aja yang Baru di Versi Ini? (v1.2.3)
-> Di versi **v1.2.3** ini membawa peningkatan besar pada kepekaan sensor privasi dan keindahan visual:
-> - 🔒 **Media Foundation & Core Audio WASAPI Privacy Sensors (Baru di v1.2.3)**:
->   - Integrasi langsung *Windows Media Foundation* (`IMFSensorActivityMonitor`) untuk deteksi instan streaming hardware kamera, serta *Core Audio WASAPI Capture Sessions* (`IAudioSessionNotification` / `IAudioSessionEvents`) untuk mikrofon.
->   - Menjamin deteksi nol-latensi untuk webcam eksternal USB, sound card, browser, OBS, Zoom, dan Teams dengan tetap mempertahankan prinsip *Zero CPU at rest*.
-> - 🔮 **Refined Privacy Dot Appearance (Baru di v1.2.3)**:
->   - Posisi titik privasi di sisi kanan notch dipoles lebih presisi dengan radial glow lembut 5px (alpha 0.35) dan inti dot 3px yang lebih tegas dan elegan.
-> - 🔄 **Automated Update Feed Pipeline & Release Safeguards (Baru di v1.2.3)**:
->   - Otomatisasi pembuatan dan penandatanganan kriptografis update feed (`site/latest.json`) di GitHub Actions serta unit test guard (`update_feed_tests.rs`).
+> > > ### ✨ Apa Aja yang Baru di Versi Ini? (v1.2.4)
+> Di versi **v1.2.4** ini membawa dukungan notifikasi obrolan yang lebih luas, kemudahan instalasi, serta optimasi listener:
+> - 💬 **Dukungan Bawaan Notifikasi Discord (Baru di v1.2.4)**:
+>   - Discord desktop kini otomatis aktif secara default (`starts_on = true`) pada tab Notifications dan notch island dengan aksen warna resmi Discord Blurple (`#5865F2`).
+> - 📦 **Rilis Paket MSIX Otomatis di GitHub Releases (Baru di v1.2.4)**:
+>   - Pipeline CI/CD GitHub Actions (`store.yml`) kini otomatis merilis paket Microsoft Store MSIX (`Oyenza-Studio-1.2.4.msix`) serta bundle uji coba sekali klik bertanda tangan (`Oyenza-Studio-1.2.4-test-copy.zip`) langsung di halaman GitHub Releases.
+> - ⚡ **Inisialisasi Notifikasi Cerdas untuk Build Developer (Baru di v1.2.4)**:
+>   - Refaktor inisialisasi WinRT `UserNotificationListener` agar dapat membaca notifikasi Windows secara oportunistik pada berbagai lingkungan Windows 10 & 11.
 > 
 > ---
 > 
 > <details>
-> <summary>📦 <b>Lihat Pembaruan Versi Sebelumnya (v1.2.2) & Versi Terdahulu</b></summary>
+> <summary>📦 <b>Lihat Pembaruan Versi Sebelumnya (v1.2.3) & Versi Terdahulu</b></summary>
 > 
-> #### 🌟 Fitur Baru di v1.2.2:
-> - 🔋 **Dynamic Notch-Following Battery Indicator**: Indikator baterai kini tampil dinamis dan mengalir anggun mengikuti lengkungan kontur bawah notch/island (busur sudut kiri, dasar notch datar, dan busur sudut kanan) dengan ujung membulat halus (*round stroke*), bukan lagi garis balok datar kaku.
-> - 🔒 **Enhanced Camera & Mic Privacy Detection for External Webcams**: Memperbaiki deteksi aktivitas kamera & mikrofon eksternal pada Windows 11 dengan evaluasi timestamps sesi aktif dan pemantauan penambahan subkey registry (*event-driven*).
+> #### 🌟 Fitur Baru di v1.2.3:
+> - 🔒 **Media Foundation & Core Audio WASAPI Privacy Sensors**: Integrasi langsung *Windows Media Foundation* (`IMFSensorActivityMonitor`) untuk deteksi instan streaming hardware kamera, serta *Core Audio WASAPI Capture Sessions* (`IAudioSessionNotification` / `IAudioSessionEvents`) untuk mikrofon dengan *Zero CPU at rest*.
+> - 🔮 **Refined Privacy Dot Appearance**: Titik privasi di sisi kanan notch dipoles lebih presisi dengan radial glow lembut 5px (alpha 0.35) dan inti dot 3px yang lebih tegas dan elegan.
+> - 🔄 **Automated Update Feed Pipeline & Release Safeguards**: Otomatisasi pembuatan dan penandatanganan kriptografis update feed (`site/latest.json`) di GitHub Actions serta unit test guard (`update_feed_tests.rs`).
 > 
 > ---
 > 
-> ℹ️ *Versi ini juga sudah mencakup seluruh perbaikan, fitur, serta optimalisasi dari versi-versi sebelumnya (v1.2.1, v1.2.0, v1.1.0, dan upstream v0.2.x).*
+> ℹ️ *Versi ini juga sudah mencakup seluruh perbaikan, fitur, serta optimalisasi dari versi-versi sebelumnya (v1.2.2, v1.2.1, v1.2.0, v1.1.0, dan upstream v0.2.x).*
 > 
 > </details>
 > 

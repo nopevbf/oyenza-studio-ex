@@ -45,14 +45,14 @@ impl Listener {
     /// (at a start with the add-on on, the page offers Allow instead).
     /// None, with the reason sent, when this copy can't listen at all.
     pub fn start(sink: EventSink, ask: bool) -> Option<Self> {
-        if !crate::autostart::packaged() {
-            crate::pinfo!("notifications: no package identity, so Windows won't let this copy listen");
-            sink.send(AppEvent::Notify(NotifyEvent::Access(NotifyAccess::NoPackage)));
-            return None;
-        }
         let listener = match UserNotificationListener::Current() {
             Ok(l) => l,
             Err(e) => {
+                if !crate::autostart::packaged() {
+                    crate::pinfo!("notifications: un-packaged and no listener: {e}");
+                    sink.send(AppEvent::Notify(NotifyEvent::Access(NotifyAccess::NoPackage)));
+                    return None;
+                }
                 crate::pwarn!("notifications: no listener: {e}");
                 sink.send(AppEvent::Notify(NotifyEvent::Access(NotifyAccess::Failed)));
                 return None;
@@ -235,9 +235,12 @@ fn read(n: &UserNotification) -> Result<Seen> {
 /// For the self-test: what this copy can do, without asking Windows anything.
 /// Err when a packaged copy can't reach the listener.
 pub fn describe() -> std::result::Result<String, String> {
-    if !crate::autostart::packaged() {
-        return Ok("installer build: no package identity, so the add-on says it needs the Store copy".into());
+    if crate::autostart::packaged() {
+        let status = UserNotificationListener::Current().and_then(|l| l.GetAccessStatus()).map_err(|e| format!("packaged: listener unavailable: {e}"))?;
+        return Ok(format!("packaged: Windows says {:?}", access_of(status, false)));
     }
-    let status = UserNotificationListener::Current().and_then(|l| l.GetAccessStatus()).map_err(|e| format!("packaged: listener unavailable: {e}"))?;
-    Ok(format!("packaged: Windows says {:?}", access_of(status, false)))
+    match UserNotificationListener::Current().and_then(|l| l.GetAccessStatus()) {
+        Ok(status) => Ok(format!("un-packaged: Windows says {:?}", access_of(status, false))),
+        Err(_) => Ok("installer build: no package identity, so the add-on says it needs the Store copy".into()),
+    }
 }

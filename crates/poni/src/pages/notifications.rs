@@ -119,7 +119,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
     let apps: Vec<(String, String, bool)> =
         st.settings.notifications.apps.iter().take(MAX_ROWS).map(|a| (a.id.clone(), a.name.clone(), a.on)).collect();
     if apps.is_empty() {
-        let note = "Apps show up here after their first notification. WhatsApp, Telegram and Phone Link start on.";
+        let note = "Apps show up here after their first notification. WhatsApp, Telegram, Phone Link and Discord start on.";
         let r = Rect::new(cols[0], area.y + ROWS_Y + 4.0, col_w, MIN_ROWS as f32 * ROW_H - 4.0);
         ui.c.text(note, r, &TextStyle::footnote().color(palette::TEXT_DIM).wrap().top());
     }

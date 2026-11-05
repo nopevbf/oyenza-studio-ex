@@ -16,6 +16,8 @@ jobs:
   msix:
     name: Build, install and self-test the Store package (Windows)
     runs-on: windows-2025
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -66,3 +68,24 @@ jobs:
           name: oyenza-studio-msix
           path: dist/Oyenza-Studio-${{ env.PONI_VERSION }}.msix
           if-no-files-found: error
+
+      # When a release is tagged (v*), wait for ci.yml to publish the release,
+      # then attach the signed test copy and unsigned MSIX to the release assets.
+      - name: Wait for the release, then add the MSIX and test copy
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $zipPath = "dist/Oyenza-Studio-$($env:PONI_VERSION)-test-copy.zip"
+          Compress-Archive -Path test-copy\* -DestinationPath $zipPath -Force
+          $msixPath = "dist/Oyenza-Studio-$($env:PONI_VERSION).msix"
+          for ($i = 1; $i -le 90; $i++) {
+            gh release view $tag 2>$null
+            if ($LASTEXITCODE -eq 0) { break }
+            Write-Host "Waiting for release $tag to be published by CI..."
+            Start-Sleep -Seconds 30
+          }
+          gh release upload $tag $msixPath $zipPath --clobber

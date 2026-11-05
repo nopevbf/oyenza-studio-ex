@@ -27,6 +27,7 @@ pub const BOTH_HIDDEN: &str = "Sender and message hidden";
 pub const WHATSAPP: Color = Color::hex(0x25D366);
 pub const TELEGRAM: Color = Color::hex(0x2AABEE);
 pub const PHONE_LINK: Color = Color::hex(0x0078D4);
+pub const DISCORD: Color = Color::hex(0x5865F2);
 
 /// One notification, as Windows describes it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -107,12 +108,14 @@ fn chat(app_id: &str, app: &str) -> Option<Color> {
         Some(TELEGRAM)
     } else if id.contains("yourphone") || name.contains("phone link") {
         Some(PHONE_LINK)
+    } else if id.contains("discord") || name.contains("discord") {
+        Some(DISCORD)
     } else {
         None
     }
 }
 
-/// On the list from its first notification: WhatsApp, Telegram, Phone Link.
+/// On the list from its first notification: WhatsApp, Telegram, Phone Link, Discord.
 pub fn starts_on(app_id: &str, app: &str) -> bool {
     chat(app_id, app).is_some()
 }
@@ -215,6 +218,7 @@ mod tests {
     const WA: &str = "5319275A.WhatsAppDesktop_cv1g1gvanyjgm!App";
     const TG: &str = "Telegram.TelegramDesktop";
     const PL: &str = "Microsoft.YourPhone_8wekyb3d8bbwe!App";
+    const DC: &str = "com.squirrel.Discord.Discord";
     const OUTLOOK: &str = "Microsoft.Office.OUTLOOK.EXE.15";
 
     fn seen(app_id: &str, app: &str, lines: &[&str]) -> Seen {
@@ -227,12 +231,14 @@ mod tests {
         assert!(starts_on(TG, "Telegram Desktop"));
         assert!(starts_on("TelegramMessengerLLP.TelegramDesktop_t4vj0pshhgkwm!Telegram.TelegramDesktop.Store", "Telegram"));
         assert!(starts_on(PL, "Phone Link"));
+        assert!(starts_on(DC, "Discord"));
         assert!(starts_on("Some.Id", "WhatsApp Beta"), "found by its name too");
         assert!(!starts_on(OUTLOOK, "Outlook"));
         assert!(!starts_on("Windows.SystemToast.SecurityAndMaintenance", "Security and Maintenance"));
         assert_eq!(color(WA, "WhatsApp"), Some(WHATSAPP));
         assert_eq!(color(TG, "Telegram"), Some(TELEGRAM));
         assert_eq!(color(PL, "Phone Link"), Some(PHONE_LINK));
+        assert_eq!(color(DC, "Discord"), Some(DISCORD));
         assert_eq!(color(OUTLOOK, "Outlook"), None);
     }
 
