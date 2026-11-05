@@ -1,6 +1,6 @@
 {
   "about": "Oyenza Studio's update file. payload is signed (ECDSA P-256, SHA-256) with the key named by key; see docs/updates.md.",
-  "payload": "{\"schema\":1,\"version\":\"1.2.4\",\"date\":\"2026-11-05\",\"headline\":\"Discord Notification Support, Automated MSIX Packages, and Listener Refinements:\",\"notes\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.4\",\"windows\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.4/Oyenza-Studio-Setup-1.2.4.exe\",\"size\":2720000,\"sha256\":\"72eecb2d64b4e116199efd1bcd59c168402960377e711abc9cd3b3229c0c30d9\"},\"mac\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.4/Oyenza-Studio-1.2.4-mac.dmg\",\"size\":5270000,\"sha256\":\"c04933dd0cdda8e4ff276bd03d3234f3c8723f41aac242c44e61816dac6de12e\"}}",
-  "signature": "OJMZIFZREpY0V0OsoqYqMS9Ev7TB4Ev/3CejeUnn7L4s1gFEkDJ8DB6YHeMXyzWlf0mpfYSBZtxB2tS8YPL6lw==",
+  "payload": "{\"schema\":1,\"version\":\"1.2.4\",\"date\":\"2026-11-05\",\"headline\":\"Discord Support in Notifications, Automated MSIX Packages on GitHub Releases, and…\",\"notes\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.4\",\"windows\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.4/Oyenza-Studio-Setup-1.2.4.exe\",\"size\":2722062,\"sha256\":\"0ee33284d217b7f36d13c41f2e13dbfa2d596e82a9b5a3d503f1037c65a5e413\"}}",
+  "signature": "1uMXO/MkE5P5DwIilgHIQYhNwD5beftvPyOgutsbP4Z8ncgkGDbs3+/UCQbevSA5UtPWYuGsZ6T1BTP3FU5clw==",
   "key": "f62e3707a88cbc9a"
 }
