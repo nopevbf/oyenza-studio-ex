@@ -10,40 +10,26 @@
 > 
 > ---
 > 
-> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.2)
-> Gak cuma sekadar fork kosongan, di versi **v1.2.2** ini membawa penyempurnaan desain dinamis dan keandalan sensor privasi:
-> - 🔋 **Dynamic Notch-Following Battery Indicator (Baru di v1.2.2)**:
+> ### ✨ Apa Aja yang Baru di Versi Ini? (v1.2.2)
+> Di versi **v1.2.2** ini membawa penyempurnaan desain dinamis dan keandalan sensor privasi:
+> - 🔋 **Dynamic Notch-Following Battery Indicator**:
 >   - Indikator baterai kini tampil dinamis dan mengalir anggun mengikuti lengkungan kontur bawah notch/island (busur sudut kiri, dasar notch datar, dan busur sudut kanan) dengan ujung membulat halus (*round stroke*), bukan lagi garis balok datar kaku.
-> - 🔒 **Enhanced Camera & Mic Privacy Detection for External Webcams (Baru di v1.2.2)**:
->   - Memperbaiki deteksi aktivitas kamera & mikrofon eksternal (USB webcam, audio interface, browser, OBS, Zoom, Teams) pada Windows 11 dengan evaluasi timestamps sesi aktif start_time > stop_time dan pemantauan penambahan subkey registry (REG_NOTIFY_CHANGE_NAME).
-> - 👀 **Dynamic Eyes & Idle Glove Wave (v1.2.1)**:
->   - Ragam ekspresi emosional acak saat idle (*blink, flutter, squint, smile, sleep, sly, read, think*) dan animasi ramah lambaian sarung tangan kartun (*glove wave*) setelah 30 detik kursor diam.
->
-> ---
->
-> <details>
-> <summary>📦 <b>Termasuk semua pembaruan dari versi v1.2.1, v1.2.0 dan sebelumnya (Klik untuk lihat detail)</b></summary>
->
-> > - 🔒 **Privacy Dot Indicator (v1.2.1)**: Titik privasi hijau cerah (kamera) dan oranye (mikrofon) di sisi kanan Island berbasis Windows CapabilityAccessManager ConsentStore secara event-driven (0% CPU at rest).
-> > - 🔋 **Battery Status Line (v1.2.1)**: Indikator sisa daya baterai laptop secara real-time (hijau / kuning / merah) di Settings › Appearance. fitur-fitur baru yang bikin notch makin hidup dan informatif:
-> - 🔒 **Privacy Dot Indicator (Kamera & Mikrofon)**:
->   - Titik privasi hijau cerah (kamera) dan oranye (mikrofon) di sisi kanan Island berbasis Windows *CapabilityAccessManager ConsentStore* secara *event-driven* (0% CPU at rest).
->   - Prioritas kamera otomatis aktif jika kamera & mic berjalan bersamaan. Dapat diatur lewat **Settings › Appearance**.
-> - 👀 **Dynamic Eyes & Idle Glove Wave**:
->   - Tampilan mata pada `IdleStyle::Eyes` kini lebih hidup dengan ragam ekspresi emosional acak saat idle (*blink, flutter, squint, smile, sleep, sly, read, think*).
->   - Saat kursor tidak bergerak selama 30 detik, Island melebar halus dan sepasang sarung tangan kartun putih muncul melambai menyapa (*glove wave*) selama 2.5 detik lalu istirahat. Gerakan mouse langsung membatalkan lambaian seketika.
-> - 🔋 **Battery Status Line**:
->   - Garis tipis 2px di bawah island yang mencerminkan sisa daya baterai laptop secara real-time (*hijau / kuning / merah*). Otomatis disembunyikan di PC desktop dan dapat diatur lewat **Settings › Appearance**.
+> - 🔒 **Enhanced Camera & Mic Privacy Detection for External Webcams**:
+>   - Memperbaiki deteksi aktivitas kamera & mikrofon eksternal (USB webcam, audio interface, browser, OBS, Zoom, Teams) pada Windows 11 dengan evaluasi timestamps sesi aktif dan pemantauan penambahan subkey registry (*event-driven*).
 > 
 > ---
 > 
 > <details>
-> <summary>📦 <b>Termasuk semua pembaruan dari versi v1.2.0 dan sebelumnya (Klik untuk lihat detail)</b></summary>
+> <summary>📦 <b>Lihat Pembaruan Versi Sebelumnya (v1.2.1) & Versi Terdahulu</b></summary>
 > 
-> > - 📅 **Calendar Island Countdown & Event Reminder (v1.2.0)**: Countdown otomatis saat jadwal mendekat sisa 3 menit, tombol pill `[OK]` untuk dismiss sementara, direct click ke tab Today, serta sound chime dan start notice.
-> > - 🔔 **Living Connectivity Toasts (v1.1.0)**: Notifikasi notch dinamis saat status koneksi Bluetooth (persentase baterai & animasi pulse ring), Wi-Fi SSID, atau kabel LAN Ethernet berubah.
-> > - 📝 **Inline Task Editing & Reminder**: Edit to-do list langsung di tempat dengan ikon pensil tanpa perlu hapus ulang.
-> > - ⚡ **Cross-Platform & Pipeline Stability**: Kompatibilitas build macOS & Windows CI, serta integrasi update feed mandiri.
+> #### 🌟 Fitur Baru di v1.2.1:
+> - 🔒 **Privacy Dot Indicator (Kamera & Mikrofon)**: Titik privasi hijau cerah (kamera) dan oranye (mikrofon) di sisi kanan Island berbasis Windows *CapabilityAccessManager ConsentStore* secara *event-driven* (0% CPU at rest).
+> - 👀 **Dynamic Eyes & Idle Glove Wave**: Ragam ekspresi emosional acak saat idle (*blink, flutter, squint, smile, sleep, sly, read, think*) dan animasi ramah lambaian sarung tangan kartun (*glove wave*) setelah 30 detik kursor diam.
+> - 🔋 **Battery Status Line**: Garis tipis 2px di bawah island yang mencerminkan sisa daya baterai laptop secara real-time (*hijau / kuning / merah*) di Settings › Appearance.
+> 
+> ---
+> 
+> ℹ️ *Versi ini juga sudah mencakup seluruh perbaikan, fitur, serta optimalisasi dari versi-versi sebelumnya (v1.2.0, v1.1.0, dan upstream v0.2.x).*
 > 
 > </details>
 > 
