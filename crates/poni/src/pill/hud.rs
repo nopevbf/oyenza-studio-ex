@@ -58,7 +58,7 @@ const MID_GAP: f32 = 16.0;
 
 pub fn geom(t: HudTag, st: &AppState) -> Option<Geom> {
     let w = match t {
-        HudTag::Volume => VOLUME_W,
+        HudTag::Volume | HudTag::Brightness => VOLUME_W,
         HudTag::Charging | HudTag::LowBattery => BATTERY_W,
         HudTag::Bluetooth => bluetooth_w(st),
         HudTag::Wifi => wifi_w(st),
@@ -71,6 +71,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, _t: HudTag, body: Rect) -> bool {
     let Some(hud) = st.hud.clone() else { return true };
     match hud.kind {
         HudKind::Volume { level, muted } => volume(ui, st, body, level, muted),
+        HudKind::Brightness { level } => brightness(ui, st, body, level),
         HudKind::Charging { percent, plugged } => {
             let (icon, color, label) = if plugged { (Icon::Bolt, palette::GREEN, "Charging") } else { (Icon::Battery, palette::TEXT, "On battery") };
             power(ui, body, icon, color, label, percent, plugged);
@@ -94,6 +95,35 @@ fn value_style() -> TextStyle {
 fn snap(ui: &Ui, v: f32) -> f32 {
     let s = ui.c.scale().max(0.1);
     (v * s).round() / s
+}
+
+/// Brightness by level, the bar and the percentage.
+fn brightness(ui: &mut Ui, st: &mut AppState, body: Rect, level: f32) {
+    let cy = body.center().y;
+    ui.c.icon(Icon::Sun, Rect::new(body.x + GLYPH_X, cy - GLYPH / 2.0, GLYPH, GLYPH), palette::TEXT);
+
+    let vs = value_style();
+    let slot = ui.c.measure("100%", &vs, 200.0).0;
+    let right = body.right() - VALUE_INSET;
+    let (x0, x1) = (body.x + TRACK_X, right - slot - VALUE_GAP);
+    let target = level.clamp(0.0, 1.0);
+    let cur = st.ui.hud_level;
+    let shown = if (cur - target).abs() > 0.002 {
+        ui.request_anim();
+        cur + (target - cur) * 0.32
+    } else {
+        target
+    };
+    st.ui.hud_level = shown;
+    if x1 - x0 >= TRACK_H {
+        let bar = Rect::new(x0, snap(ui, cy - TRACK_H / 2.0), x1 - x0, TRACK_H);
+        ui.c.fill_rrect(bar, TRACK_H / 2.0, TRACK);
+        if shown > 0.0 {
+            ui.c.fill_rrect(Rect::new(bar.x, bar.y, (bar.w * shown).max(TRACK_H), bar.h), TRACK_H / 2.0, palette::TEXT);
+        }
+    }
+    let pct = format!("{}%", (target * 100.0).round() as i32);
+    ui.c.text(&pct, Rect::new(right - slot, cy - 10.0, slot, 20.0), &vs.right());
 }
 
 /// The speaker by level, the bar and the percentage (or "Muted").

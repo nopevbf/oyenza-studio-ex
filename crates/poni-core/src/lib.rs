@@ -11,6 +11,7 @@ pub mod addons;
 pub mod agenda;
 pub mod applemusic;
 pub mod battery_line;
+pub mod brightness;
 pub mod datetime;
 pub mod downloads;
 pub mod eyes;

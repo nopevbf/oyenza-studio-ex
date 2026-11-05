@@ -1445,8 +1445,15 @@ impl App {
             }
             let dirty = self.settings_win.as_ref().is_some_and(|w| w.view.dirty);
             if !(out.again || ran || dirty) {
-                return;
+                break;
             }
+        }
+        if let Some(s) = self.services.as_mut() {
+            s.update_osd_suppression(
+                self.st.settings.suppress_windows_volume_osd,
+                self.st.settings.suppress_windows_brightness_osd,
+            );
+            s.update_toast_suppression(self.st.settings.suppress_windows_toast_banners);
         }
     }
 
@@ -2385,8 +2392,17 @@ impl App {
             AppEvent::Volume { level, muted, switched } => {
                 let first = !self.st.volume.known;
                 self.st.volume = crate::state::VolumeState { level, muted, known: true };
-                if !first && !switched && !self.st.should_suppress_volume_hud() && self.st.settings.hud_volume {
+                let suppress_in_fullscreen = self.st.game.active && !self.st.settings.hud_in_fullscreen;
+                if !first && !switched && !self.st.should_suppress_volume_hud() && self.st.settings.hud_volume && !suppress_in_fullscreen {
                     self.st.show_hud(HudKind::Volume { level, muted }, 1.6);
+                }
+            }
+            AppEvent::Brightness { level } => {
+                self.st.brightness = crate::state::BrightnessState { level, known: true };
+                let suppress_in_fullscreen = self.st.game.active && !self.st.settings.hud_in_fullscreen;
+                if !suppress_in_fullscreen {
+                    self.st.show_hud(HudKind::Brightness { level }, 1.6);
+                    self.request_frame();
                 }
             }
             AppEvent::Privacy(p) => {

@@ -234,6 +234,11 @@ pub enum Key {
     IdleLook,
     PrivacyIndicator,
     BatteryLine,
+    IdleLookOnly,
+    SuppressWinVolume,
+    SuppressWinBrightness,
+    SuppressWinToasts,
+    HudInFullscreen,
     HoverDelay,
     CloseDelay,
     Width,
@@ -419,6 +424,7 @@ pub fn blocks(section: Section, st: &AppState) -> Vec<Block> {
                     vec![
                         switch(Key::PrivacyIndicator, "Privacy indicator", Some("Shows a green/orange dot for active camera/mic"), s.privacy_indicator),
                         switch(Key::BatteryLine, "Battery status line", Some("Shows a thin battery level indicator along the bottom edge"), s.battery_line),
+                        switch(Key::IdleLookOnly, "Idle look only", Some("Mute all island notices (music, calendar, prayer times, etc.)"), s.idle_look_only),
                     ],
                 ),
             ]
@@ -467,6 +473,15 @@ pub fn blocks(section: Section, st: &AppState) -> Vec<Block> {
                         switch(Key::HudPower, "Charger and battery", Some("When you plug in, unplug or run low"), s.hud_power),
                         switch(Key::HudBluetooth, "Bluetooth", Some("When headphones and other devices connect"), s.hud_bluetooth),
                         switch(Key::ConnectivityToasts, "Connectivity toasts", Some("When Bluetooth, Wi-Fi or Ethernet connects or drops"), s.connectivity_toasts),
+                    ],
+                ),
+                Block::Group(
+                    Some("Windows OSD & Notifications"),
+                    vec![
+                        switch(Key::SuppressWinVolume, "Replace Windows volume flyout", Some("Shows Oyenza volume HUD instead of Windows OSD"), s.suppress_windows_volume_osd),
+                        switch(Key::SuppressWinBrightness, "Replace Windows brightness flyout", Some("Shows Oyenza brightness HUD instead of Windows OSD"), s.suppress_windows_brightness_osd),
+                        switch(Key::SuppressWinToasts, "Silence Windows toast banners", Some("Hides pop-up banners while keeping history in Action Center"), s.suppress_windows_toast_banners),
+                        switch(Key::HudInFullscreen, "Show HUD in full-screen games", Some("Display volume and brightness overlays over full-screen apps"), s.hud_in_fullscreen),
                     ],
                 ),
                 Block::Group(
@@ -608,6 +623,11 @@ pub fn apply(st: &mut AppState, key: Key, act: Act) {
         },
         Key::PrivacyIndicator => s.privacy_indicator = !s.privacy_indicator,
         Key::BatteryLine => s.battery_line = !s.battery_line,
+        Key::IdleLookOnly => s.idle_look_only = !s.idle_look_only,
+        Key::SuppressWinVolume => s.suppress_windows_volume_osd = !s.suppress_windows_volume_osd,
+        Key::SuppressWinBrightness => s.suppress_windows_brightness_osd = !s.suppress_windows_brightness_osd,
+        Key::SuppressWinToasts => s.suppress_windows_toast_banners = !s.suppress_windows_toast_banners,
+        Key::HudInFullscreen => s.hud_in_fullscreen = !s.hud_in_fullscreen,
         Key::GameStats => s.game_stats = !s.game_stats,
         Key::GamePeek => s.game_peek = !s.game_peek,
         Key::Lyrics => s.lyrics = !s.lyrics,
@@ -1414,5 +1434,34 @@ mod tests {
         assert_eq!(offset_text(0), "On time");
         assert_eq!(offset_text(300), "−0.3 s");
         assert_eq!(offset_text(-1200), "+1.2 s");
+    }
+
+    #[test]
+    fn appearance_section_has_idle_look_only_toggle() {
+        let mut st = state();
+        assert!(!st.settings.idle_look_only);
+        apply(&mut st, Key::IdleLookOnly, Act::Toggle);
+        assert!(st.settings.idle_look_only);
+    }
+
+    #[test]
+    fn windows_osd_and_toast_suppression_toggles() {
+        let mut st = state();
+        assert!(!st.settings.suppress_windows_volume_osd);
+        assert!(!st.settings.suppress_windows_brightness_osd);
+        assert!(!st.settings.suppress_windows_toast_banners);
+        assert!(!st.settings.hud_in_fullscreen);
+
+        apply(&mut st, Key::SuppressWinVolume, Act::Toggle);
+        assert!(st.settings.suppress_windows_volume_osd);
+
+        apply(&mut st, Key::SuppressWinBrightness, Act::Toggle);
+        assert!(st.settings.suppress_windows_brightness_osd);
+
+        apply(&mut st, Key::SuppressWinToasts, Act::Toggle);
+        assert!(st.settings.suppress_windows_toast_banners);
+
+        apply(&mut st, Key::HudInFullscreen, Act::Toggle);
+        assert!(st.settings.hud_in_fullscreen);
     }
 }

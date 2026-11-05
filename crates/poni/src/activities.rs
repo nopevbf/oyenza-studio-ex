@@ -44,6 +44,7 @@ pub enum Activity {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HudTag {
     Volume,
+    Brightness,
     Charging,
     Bluetooth,
     LowBattery,
@@ -151,6 +152,7 @@ pub fn content_key(m: &Mode) -> u32 {
 fn hud_tag(k: &HudKind) -> HudTag {
     match k {
         HudKind::Volume { .. } => HudTag::Volume,
+        HudKind::Brightness { .. } => HudTag::Brightness,
         HudKind::Charging { .. } => HudTag::Charging,
         HudKind::Bluetooth { .. } => HudTag::Bluetooth,
         HudKind::LowBattery { .. } => HudTag::LowBattery,
@@ -189,6 +191,9 @@ pub fn calendar_countdown(st: &AppState) -> Option<poni_core::agenda::CalendarCo
 }
 
 pub fn current_activity(st: &AppState) -> Option<Activity> {
+    if st.settings.idle_look_only {
+        return None;
+    }
     // A recording comes first: its Stop must be one click away.
     if st.rec_live() && st.record_on() {
         return Some(Activity::Recording);
@@ -229,6 +234,12 @@ fn downloading(st: &AppState) -> bool {
 }
 
 pub fn collapsed_mode(st: &AppState) -> Mode {
+    if st.settings.idle_look_only {
+        if let Some(h) = &st.hud {
+            return Mode::Hud(hud_tag(&h.kind));
+        }
+        return resting_mode(st);
+    }
     // A notice that stays (a new version's) waits under a volume or
     // brightness change, a game's readout and a recording (its Stop stays
     // one click away), and shows again after.
@@ -340,7 +351,7 @@ pub fn geom(m: &Mode, st: &AppState) -> Geom {
         Mode::Activity(Activity::Recording) => Geom::new(recording_w(st), 32.0, 15.0),
         Mode::Activity(Activity::Download) => Geom::new(if download_many(st) { DOWNLOAD_MANY_W } else { DOWNLOAD_W }, 32.0, 15.0),
         Mode::Activity(Activity::Notes) => Geom::new(notes_w(st), 32.0, 15.0),
-        Mode::Hud(HudTag::Volume) => Geom::new(316.0, 40.0, 19.0),
+        Mode::Hud(HudTag::Volume) | Mode::Hud(HudTag::Brightness) => Geom::new(316.0, 40.0, 19.0),
         Mode::Hud(HudTag::Charging) | Mode::Hud(HudTag::LowBattery) => Geom::new(300.0, 40.0, 19.0),
         Mode::Hud(HudTag::Bluetooth) | Mode::Hud(HudTag::Wifi) => Geom::new(336.0, 46.0, 22.0),
         Mode::Notice => Geom::new(372.0, 52.0, 24.0),
@@ -945,6 +956,29 @@ fn draw_hud(ui: &mut Ui, st: &mut AppState, body: Rect) {
                 ui.c.fill_rrect(Rect::new(bar.x, bar.y, (bar.w * shown).max(6.0), bar.h), 3.0, level);
             }
             let pct = if muted { "Muted".to_string() } else { format!("{}%", (level * 100.0).round() as i32) };
+            ui.c.text(&pct, Rect::new(body.right() - HUD_PAD - 48.0, body.y, 48.0, body.h), &label_st.tabular().right());
+        }
+        HudKind::Brightness { level } => {
+            ui.c.icon(Icon::Sun, icon_r, palette::TEXT);
+            let bar = Rect::new(body.x + 48.0, cy - 3.0, body.w - 48.0 - 62.0, 6.0);
+            let target = level.clamp(0.0, 1.0);
+            let cur = st.ui.hud_level;
+            let shown = if (cur - target).abs() > 0.002 {
+                ui.request_anim();
+                cur + (target - cur) * 0.32
+            } else {
+                target
+            };
+            st.ui.hud_level = shown;
+            ui.c.fill_rrect(bar, 3.0, palette::TRACK);
+            if shown > 0.0 {
+                let col = match ui.c.look().accent {
+                    Some(a) => a,
+                    None => Color::white(0.95),
+                };
+                ui.c.fill_rrect(Rect::new(bar.x, bar.y, (bar.w * shown).max(6.0), bar.h), 3.0, col);
+            }
+            let pct = format!("{}%", (target * 100.0).round() as i32);
             ui.c.text(&pct, Rect::new(body.right() - HUD_PAD - 48.0, body.y, 48.0, body.h), &label_st.tabular().right());
         }
         HudKind::Charging { percent, plugged } => {
@@ -1646,5 +1680,14 @@ mod tests {
         for (f, s) in [(0.0, "0%"), (0.29, "29%"), (0.369, "37%"), (0.996, "99%"), (1.0, "100%"), (1.5, "100%")] {
             assert_eq!(download_pct(f), s);
         }
+    }
+
+    #[test]
+    fn idle_look_only_suppresses_activities_and_notices() {
+        let mut st = playing(None);
+        assert_eq!(current_activity(&st), Some(Activity::Media));
+        st.settings.idle_look_only = true;
+        assert_eq!(current_activity(&st), None);
+        assert_eq!(collapsed_mode(&st), Mode::Idle);
     }
 }

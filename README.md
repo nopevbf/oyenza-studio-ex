@@ -6,32 +6,36 @@
 > Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
 > 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
 > 
-> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.4**, berisi patch & fitur tambahan di atas vanilla release tersebut.
+> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.3.0**, berisi patch & fitur tambahan di atas vanilla release tersebut.
 > 
 > ---
 > 
-> > > ### ✨ Apa Aja yang Baru di Versi Ini? (v1.2.4)
-> Di versi **v1.2.4** ini membawa dukungan notifikasi obrolan yang lebih luas, kemudahan instalasi, serta optimasi listener:
-> - 💬 **Dukungan Bawaan Notifikasi Discord (Baru di v1.2.4)**:
->   - Discord desktop kini otomatis aktif secara default (`starts_on = true`) pada tab Notifications dan notch island dengan aksen warna resmi Discord Blurple (`#5865F2`).
-> - 📦 **Rilis Paket MSIX Otomatis di GitHub Releases (Baru di v1.2.4)**:
->   - Pipeline CI/CD GitHub Actions (`store.yml`) kini otomatis merilis paket Microsoft Store MSIX (`Oyenza-Studio-1.2.4.msix`) serta bundle uji coba sekali klik bertanda tangan (`Oyenza-Studio-1.2.4-test-copy.zip`) langsung di halaman GitHub Releases.
-> - ⚡ **Inisialisasi Notifikasi Cerdas untuk Build Developer (Baru di v1.2.4)**:
->   - Refaktor inisialisasi WinRT `UserNotificationListener` agar dapat membaca notifikasi Windows secara oportunistik pada berbagai lingkungan Windows 10 & 11.
+> > > ### ✨ Apa Aja yang Baru di Versi Ini? (v1.3.0)
+> Di versi **v1.3.0** ini menghadirkan kontrol tampilan penuh tanpa gangguan OSD Windows, indikator kecerahan layar baru, serta keheningan Island kustom:
+> - 🔇 **Supresi OSD Volume & Kecerahan Bawaan Windows (Baru di v1.3.0)**:
+>   - Meniadakan flyout OSD standar Windows yang mengganggu saat menekan tombol volume keyboard atau hotkey kecerahan, digantikan langsung oleh Volume HUD & Brightness HUD Island Oyenza secara mulus dan elegan.
+> - ☀️ **Komponen Brightness HUD Baru (Baru di v1.3.0)**:
+>   - Menghadirkan indikator kecerahan layar baru di Island Oyenza dengan ikon matahari (`Icon::Sun`), animasi gliding, dan persentase numerik. Mendukung layar internal laptop (WMI/ACPI) maupun monitor eksternal (DDC/CI via DXVA2) dengan worker thread non-blocking (*Rule 1*).
+> - 🔕 **Supresi Toast Banner Notifikasi Windows (WhatsApp, dll) (Baru di v1.3.0)**:
+>   - Membungkam pop-up banner toast melayang di pojok kanan bawah layar Windows agar tidak muncul ganda, namun seluruh pesan **tetap tersimpan rapi di Action Center / Notification Center history Windows**.
+> - 🎛️ **Mode "Idle Look Only" di Menu Appearance (Baru di v1.3.0)**:
+>   - Saklar baru di menu pengaturan Appearance untuk membungkam seluruh notifikasi/banner internal Oyenza (musik/Spotify, event kalender, adzan/sholat, download, dll) sehingga Island terkunci hening dalam mode *idle look*.
+> - 🛡️ **Fail-Safe Transient State & UIPI Resilience (Baru di v1.3.0)**:
+>   - Seluruh mekanisme supresi berjalan tanpa meminta hak Administrator (UAC) dan otomatis dipulihkan (*restored*) saat Oyenza Studio ditutup (*Rule 2*). Kompatibel terhadap jendela elevated Administrator (Task Manager dll) tanpa glitch (*Rule 3*).
 > 
 > ---
 > 
 > <details>
-> <summary>📦 <b>Lihat Pembaruan Versi Sebelumnya (v1.2.3) & Versi Terdahulu</b></summary>
+> <summary>📦 <b>Lihat Pembaruan Versi Sebelumnya (v1.2.4) & Versi Terdahulu</b></summary>
 > 
-> #### 🌟 Fitur Baru di v1.2.3:
-> - 🔒 **Media Foundation & Core Audio WASAPI Privacy Sensors**: Integrasi langsung *Windows Media Foundation* (`IMFSensorActivityMonitor`) untuk deteksi instan streaming hardware kamera, serta *Core Audio WASAPI Capture Sessions* (`IAudioSessionNotification` / `IAudioSessionEvents`) untuk mikrofon dengan *Zero CPU at rest*.
-> - 🔮 **Refined Privacy Dot Appearance**: Titik privasi di sisi kanan notch dipoles lebih presisi dengan radial glow lembut 5px (alpha 0.35) dan inti dot 3px yang lebih tegas dan elegan.
-> - 🔄 **Automated Update Feed Pipeline & Release Safeguards**: Otomatisasi pembuatan dan penandatanganan kriptografis update feed (`site/latest.json`) di GitHub Actions serta unit test guard (`update_feed_tests.rs`).
+> #### 🌟 Fitur Baru di v1.2.4:
+> - 💬 **Dukungan Bawaan Notifikasi Discord**: Discord desktop otomatis aktif secara default (`starts_on = true`) pada tab Notifications dan notch island dengan aksen warna resmi Discord Blurple (`#5865F2`).
+> - 📦 **Rilis Paket MSIX Otomatis di GitHub Releases**: Pipeline CI/CD GitHub Actions (`store.yml`) kini otomatis merilis paket Microsoft Store MSIX (`Oyenza-Studio-1.2.4.msix`) serta bundle uji coba sekali klik bertanda tangan (`Oyenza-Studio-1.2.4-test-copy.zip`) langsung di halaman GitHub Releases.
+> - ⚡ **Inisialisasi Notifikasi Cerdas untuk Build Developer**: Refaktor inisialisasi WinRT `UserNotificationListener` agar dapat membaca notifikasi Windows secara oportunistik pada berbagai lingkungan Windows 10 & 11.
 > 
 > ---
 > 
-> ℹ️ *Versi ini juga sudah mencakup seluruh perbaikan, fitur, serta optimalisasi dari versi-versi sebelumnya (v1.2.2, v1.2.1, v1.2.0, v1.1.0, dan upstream v0.2.x).*
+> ℹ️ *Versi ini juga sudah mencakup seluruh perbaikan, fitur, serta optimalisasi dari versi-versi sebelumnya (v1.2.3, v1.2.2, v1.2.1, v1.2.0, v1.1.0, dan upstream v0.2.x).*
 > 
 > </details>
 > 

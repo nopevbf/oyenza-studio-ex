@@ -88,6 +88,12 @@ impl Default for LyricsState {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct BrightnessState {
+    pub level: f32,
+    pub known: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct VolumeState {
     pub level: f32,
     pub muted: bool,
@@ -119,6 +125,7 @@ pub struct SysStats {
 #[derive(Clone, Debug, PartialEq)]
 pub enum HudKind {
     Volume { level: f32, muted: bool },
+    Brightness { level: f32 },
     Charging { percent: u8, plugged: bool },
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },
     LowBattery { percent: u8 },
@@ -806,6 +813,7 @@ pub struct AppState {
     pub lyrics: LyricsState,
     pub pomodoro: Pomodoro,
     pub volume: VolumeState,
+    pub brightness: BrightnessState,
     pub power: PowerState,
     pub privacy: poni_core::privacy::PrivacyState,
     pub idle_tracker: poni_core::eyes::IdleTracker,
@@ -928,6 +936,7 @@ impl AppState {
             lyrics: LyricsState::default(),
             pomodoro,
             volume: VolumeState::default(),
+            brightness: BrightnessState::default(),
             power: PowerState::default(),
             privacy: poni_core::privacy::PrivacyState::default(),
             idle_tracker: poni_core::eyes::IdleTracker::default(),

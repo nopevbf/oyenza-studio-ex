@@ -137,6 +137,7 @@ pub enum AppEvent {
     AppleMusic(AppleMusicStatus),
     /// Master volume changed (0..=1).
     Volume { level: f32, muted: bool, switched: bool },
+    Brightness { level: f32 },
     Power(PowerState),
     Privacy(poni_core::privacy::PrivacyState),
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },

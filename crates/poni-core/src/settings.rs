@@ -141,6 +141,11 @@ pub struct Settings {
     #[serde(default = "true_val")]
     pub privacy_indicator: bool,
     pub battery_line: bool,
+    pub suppress_windows_volume_osd: bool,
+    pub suppress_windows_brightness_osd: bool,
+    pub suppress_windows_toast_banners: bool,
+    pub idle_look_only: bool,
+    pub hud_in_fullscreen: bool,
 }
 
 /// What the AI tab shows and whether it gives heads-up notices.
@@ -265,6 +270,11 @@ impl Default for Settings {
             calendar_remind_min: 3,
             privacy_indicator: true,
             battery_line: false,
+            suppress_windows_volume_osd: false,
+            suppress_windows_brightness_osd: false,
+            suppress_windows_toast_banners: false,
+            idle_look_only: false,
+            hud_in_fullscreen: false,
         }
     }
 }

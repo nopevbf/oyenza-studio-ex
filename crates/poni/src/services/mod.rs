@@ -6,6 +6,9 @@ pub mod adzan;
 pub mod applemusic;
 pub mod applemusic_ui;
 pub mod audio;
+pub mod brightness;
+pub mod osd_suppress;
+pub mod toast_suppress;
 pub mod backdrop;
 pub mod bluetooth;
 pub mod clipboard;
@@ -60,6 +63,9 @@ pub struct Services {
     _wifi: Option<wifi::WifiService>,
     _ethernet: Option<crate::connectivity::watcher::EthernetWatcher>,
     _privacy: Option<privacy::PrivacyService>,
+    _osd_suppress: Option<osd_suppress::OsdSuppressService>,
+    _brightness: Option<brightness::BrightnessService>,
+    _toast_suppress: Option<toast_suppress::ToastSuppressService>,
     fullscreen: Option<fullscreen::FullscreenWatcher>,
     oyenza: Option<oyenza::OyenzaService>,
     pairdrop: Option<pairdrop::PairDropService>,
@@ -114,12 +120,34 @@ impl Services {
             .map(|a| a.id)
             .collect();
         let addons = started("add-ons", addons::AddonService::start(sink.clone(), on));
-        Self { media, lyrics, _audio: audio, _bluetooth: bluetooth, _bluetooth_pnp: bluetooth_pnp, _wifi: wifi, _ethernet: ethernet, _privacy: privacy, fullscreen, oyenza, pairdrop, addons, stocks: std::cell::OnceCell::new(), usage: std::cell::OnceCell::new(), downloader: std::cell::OnceCell::new(), sink: sink.clone() }
+        let brightness = started("brightness", brightness::BrightnessService::start(sink.clone()));
+        let osd_suppress = if settings.suppress_windows_volume_osd || settings.suppress_windows_brightness_osd {
+            osd_suppress::OsdSuppressService::start(sink.clone(), settings.suppress_windows_volume_osd, settings.suppress_windows_brightness_osd)
+        } else {
+            None
+        };
+        let toast_suppress = Some(toast_suppress::ToastSuppressService::new(settings.suppress_windows_toast_banners));
+        Self { media, lyrics, _audio: audio, _bluetooth: bluetooth, _bluetooth_pnp: bluetooth_pnp, _wifi: wifi, _ethernet: ethernet, _privacy: privacy, _osd_suppress: osd_suppress, _brightness: brightness, _toast_suppress: toast_suppress, fullscreen, oyenza, pairdrop, addons, stocks: std::cell::OnceCell::new(), usage: std::cell::OnceCell::new(), downloader: std::cell::OnceCell::new(), sink: sink.clone() }
     }
 
     pub fn stop(self, _helper: HWND) {
         if let Some(f) = self.fullscreen {
             f.stop();
+        }
+    }
+
+    pub fn update_osd_suppression(&mut self, suppress_vol: bool, suppress_bri: bool) {
+        if let Some(s) = &self._osd_suppress {
+            s.set_suppress_volume(suppress_vol);
+            s.set_suppress_brightness(suppress_bri);
+        } else if suppress_vol || suppress_bri {
+            self._osd_suppress = osd_suppress::OsdSuppressService::start(self.sink.clone(), suppress_vol, suppress_bri);
+        }
+    }
+
+    pub fn update_toast_suppression(&self, enable: bool) {
+        if let Some(t) = &self._toast_suppress {
+            t.set_suppress(enable);
         }
     }
 
