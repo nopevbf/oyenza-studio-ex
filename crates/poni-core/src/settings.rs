@@ -54,6 +54,10 @@ fn version_zero() -> u32 {
     0
 }
 
+fn true_val() -> bool {
+    true
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
@@ -134,6 +138,9 @@ pub struct Settings {
     pub ielts_spice: Spice,
     /// Minutes before a calendar event the island counts down (0 = no countdown).
     pub calendar_remind_min: u32,
+    #[serde(default = "true_val")]
+    pub privacy_indicator: bool,
+    pub battery_line: bool,
 }
 
 /// What the AI tab shows and whether it gives heads-up notices.
@@ -256,6 +263,8 @@ impl Default for Settings {
             notifications: crate::notifications::NotificationSettings::default(),
             ielts_spice: Spice::default(),
             calendar_remind_min: 3,
+            privacy_indicator: true,
+            battery_line: false,
         }
     }
 }

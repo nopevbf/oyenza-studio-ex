@@ -301,7 +301,13 @@ pub fn geom(m: &Mode, st: &AppState) -> Geom {
             IdleStyle::Minimal => Geom::new(150.0, 26.0, 12.0),
             // A little taller than the eyes, so his ears clear the top edge.
             IdleStyle::Eyes if oyen::on(st.settings.theme) => Geom::new(104.0, 36.0, 16.0),
-            IdleStyle::Eyes => Geom::new(118.0, 30.0, 14.0),
+            IdleStyle::Eyes => {
+                if st.idle_tracker.is_waving() {
+                    Geom::new(160.0, 36.0, 18.0)
+                } else {
+                    Geom::new(118.0, 30.0, 14.0)
+                }
+            }
             IdleStyle::Hidden => hidden_strip(),
         },
         Mode::Activity(Activity::Media) => {
@@ -395,6 +401,12 @@ pub fn next_wake(m: &Mode, st: &AppState) -> Option<f64> {
     } else if *m == Mode::Idle && st.settings.idle_style == IdleStyle::Eyes {
         let phase = now % BLINK_PERIOD;
         consider(if phase < BLINK_LEN { now - phase + BLINK_LEN } else { now - phase + BLINK_PERIOD });
+        let idle_s = st.idle_tracker.idle_secs();
+        if idle_s < poni_core::eyes::WAVE_IDLE_THRESHOLD {
+            consider(now + (poni_core::eyes::WAVE_IDLE_THRESHOLD - idle_s));
+        } else if st.idle_tracker.is_waving() {
+            consider(now + (poni_core::eyes::WAVE_IDLE_THRESHOLD + poni_core::eyes::WAVE_DURATION - idle_s));
+        }
     }
     if !matches!(m, Mode::Expanded(_)) {
         if let Some(end) = media_grace_end(st) {
@@ -439,22 +451,23 @@ fn draw_oyen_rest(ui: &mut Ui, st: &AppState, body: Rect, cx: f32, w: f32, bar_y
 }
 
 pub fn draw(ui: &mut Ui, st: &mut AppState, m: &Mode, body: Rect) {
-    if crate::pill::draw(ui, st, m, body) {
-        return;
-    }
-    match m {
-        Mode::Idle => draw_idle(ui, st, body),
-        Mode::Activity(a) => draw_activity(ui, st, *a, body),
-        Mode::Hud(_) => draw_hud(ui, st, body),
-        Mode::Notice => draw_notice(ui, st, body),
-        Mode::ConnectivityToast => {
-            if let Some(toast) = &st.connectivity_toast {
-                crate::connectivity::toast::draw_connectivity_toast(ui, toast, body, st.now);
-                ui.request_anim();
+    if !crate::pill::draw(ui, st, m, body) {
+        match m {
+            Mode::Idle => draw_idle(ui, st, body),
+            Mode::Activity(a) => draw_activity(ui, st, *a, body),
+            Mode::Hud(_) => draw_hud(ui, st, body),
+            Mode::Notice => draw_notice(ui, st, body),
+            Mode::ConnectivityToast => {
+                if let Some(toast) = &st.connectivity_toast {
+                    crate::connectivity::toast::draw_connectivity_toast(ui, toast, body, st.now);
+                    ui.request_anim();
+                }
             }
+            Mode::Expanded(_) | Mode::Aside => {}
         }
-        Mode::Expanded(_) | Mode::Aside => {}
     }
+    draw_battery_line(ui, st, body);
+    draw_privacy_dot(ui, st, body);
 }
 
 /// Snap a DIP coordinate to the device-pixel grid (crisp small outlines at
@@ -505,9 +518,8 @@ fn draw_idle(ui: &mut Ui, st: &mut AppState, body: Rect) {
             draw_oyen_rest(ui, st, body, body.center().x, OYEN_IDLE_W, body.bottom() - 7.0);
         }
         IdleStyle::Eyes => {
-            // Eyes glance toward the cursor while hovering.
             let look = ui.input.mouse.map(|p| ((p.x - body.center().x) / body.w).clamp(-0.5, 0.5) * 6.0).unwrap_or(0.0);
-            draw_eyes(ui, st, body.center().x, cy, look);
+            draw_dynamic_eyes(ui, st, body, look);
         }
         IdleStyle::Minimal | IdleStyle::Hidden => {}
     }
@@ -516,6 +528,7 @@ fn draw_idle(ui: &mut Ui, st: &mut AppState, body: Rect) {
 /// The Eyes look's pair of eyes, centred on (`cx`, `cy`) and turned `look`
 /// DIPs sideways, blinking on their own wake ([`next_wake`]). A Mac's notch
 /// draws them beside the camera (`mac/notch.rs`).
+#[allow(dead_code)]
 pub fn draw_eyes(ui: &mut Ui, st: &AppState, cx: f32, cy: f32, look: f32) {
     let blink = (st.now % BLINK_PERIOD) < BLINK_LEN;
     for dx in [-11.0f32, 11.0] {
@@ -1107,6 +1120,186 @@ pub(crate) fn text_with_dim_width(ui: &mut Ui, text: &str, dim: &str, style: &Te
     } else {
         w.ceil() + TITLE_DIM_GAP + ui.c.measure(dim, style, 2000.0).0
     }
+}
+
+
+static GLOVE_SEGS: std::sync::OnceLock<Vec<poni_core::svgpath::Seg>> = std::sync::OnceLock::new();
+static CUFF_SEGS: std::sync::OnceLock<Vec<poni_core::svgpath::Seg>> = std::sync::OnceLock::new();
+
+fn get_glove_segs() -> (&'static [poni_core::svgpath::Seg], &'static [poni_core::svgpath::Seg]) {
+    let glove = GLOVE_SEGS.get_or_init(|| {
+        let d = "M26 78L18 61Q4 51 8 43Q10 35 17 41L22 46L13 17Q12 8 19 7Q26 6 28 16L33 34L30 10Q30 2 37 2Q44 2 44 10L45 33L48 13Q50 5 57 8Q63 10 61 18L58 39L65 25Q69 18 74 23Q79 28 74 35L66 55Q66 67 56 78Z";
+        poni_core::svgpath::parse(d).unwrap_or_default()
+    });
+    let cuff = CUFF_SEGS.get_or_init(|| {
+        let d = "M24 76H57V86H24Z";
+        poni_core::svgpath::parse(d).unwrap_or_default()
+    });
+    (glove.as_slice(), cuff.as_slice())
+}
+
+fn transform_glove_segs(segs: &[poni_core::svgpath::Seg], at: Point, deg: f32, flip_x: bool) -> Vec<poni_core::svgpath::Seg> {
+    use poni_core::svgpath::Seg;
+    let rad = deg.to_radians();
+    let (sin, cos) = rad.sin_cos();
+    let k = 0.22f32;
+    let map = |x: f32, y: f32| {
+        let xr = if flip_x { -(x - 40.0) } else { x - 40.0 };
+        let yr = y - 85.0;
+        let rx = xr * cos - yr * sin;
+        let ry = xr * sin + yr * cos;
+        (at.x + k * rx, at.y + k * ry)
+    };
+    segs.iter()
+        .map(|s| match *s {
+            Seg::MoveTo(x, y) => {
+                let (x, y) = map(x, y);
+                Seg::MoveTo(x, y)
+            }
+            Seg::LineTo(x, y) => {
+                let (x, y) = map(x, y);
+                Seg::LineTo(x, y)
+            }
+            Seg::QuadTo(x1, y1, x, y) => {
+                let ((x1, y1), (x, y)) = (map(x1, y1), map(x, y));
+                Seg::QuadTo(x1, y1, x, y)
+            }
+            Seg::CubicTo(x1, y1, x2, y2, x, y) => {
+                let ((x1, y1), (x2, y2), (x, y)) = (map(x1, y1), map(x2, y2), map(x, y));
+                Seg::CubicTo(x1, y1, x2, y2, x, y)
+            }
+            Seg::ArcTo(rx, ry, rot, large, sweep, x, y) => {
+                let (x, y) = map(x, y);
+                Seg::ArcTo(rx * k, ry * k, rot + deg, large, sweep ^ flip_x, x, y)
+            }
+            Seg::Close => Seg::Close,
+        })
+        .collect()
+}
+
+pub fn draw_single_glove(ui: &mut Ui, glove_segs: &[poni_core::svgpath::Seg], cuff_segs: &[poni_core::svgpath::Seg], at: Point, deg: f32, flip_x: bool) {
+    let glove = transform_glove_segs(glove_segs, at, deg, flip_x);
+    let cuff = transform_glove_segs(cuff_segs, at, deg, flip_x);
+    ui.c.path(&glove, Some(Color::white(0.96)), Some((Color::hex(0xb4bfcb), 1.0)));
+    ui.c.path(&cuff, Some(Color::hex(0xd5deeb)), None);
+}
+
+pub fn draw_dynamic_eyes(ui: &mut Ui, st: &mut AppState, body: Rect, look: f32) {
+    let cx = body.center().x;
+    let cy = body.center().y;
+
+    if st.idle_tracker.is_waving() {
+        ui.request_anim();
+        let (glove, cuff) = get_glove_segs();
+        let t = st.now;
+        let wave_l = ((t * 5.0).sin() * 25.0) as f32;
+        let wave_r = (((t * 5.0) + 1.6).sin() * 25.0) as f32;
+        draw_single_glove(ui, glove, cuff, Point::new(body.x + 22.0, cy - 1.0), wave_l, true);
+        draw_single_glove(ui, glove, cuff, Point::new(body.right() - 22.0, cy - 1.0), wave_r, false);
+        draw_eye_smile(ui, cx, cy);
+        return;
+    }
+
+    const CYCLE_PERIOD: f64 = 5.0;
+    const ACTIVE_WINDOW: f64 = 1.8;
+    let cycle_idx = (st.now / CYCLE_PERIOD).floor() as u64;
+    let phase = st.now.rem_euclid(CYCLE_PERIOD);
+
+    if phase < ACTIVE_WINDOW && look.abs() < 0.1 {
+        let mood = poni_core::eyes::EyeMood::from_seed(cycle_idx);
+        match mood {
+            poni_core::eyes::EyeMood::Blink => {
+                let h = if phase < 0.25 { 2.5 } else { 11.0 };
+                draw_eye_pills(ui, cx, cy, look, h, 0.0);
+            }
+            poni_core::eyes::EyeMood::Flutter => {
+                ui.request_anim();
+                let sub_phase = (phase * 14.0).sin();
+                let h = if sub_phase > 0.0 { 2.5 } else { 11.0 };
+                draw_eye_pills(ui, cx, cy, look, h, 0.0);
+            }
+            poni_core::eyes::EyeMood::Squint => {
+                draw_eye_pills(ui, cx, cy, look, 5.0, 0.0);
+            }
+            poni_core::eyes::EyeMood::Smile => {
+                draw_eye_smile(ui, cx, cy);
+            }
+            poni_core::eyes::EyeMood::Sleep => {
+                draw_eye_sleep(ui, cx, cy);
+            }
+            poni_core::eyes::EyeMood::Sly => {
+                draw_eye_pills(ui, cx, cy, 3.5, 6.5, 0.0);
+            }
+            poni_core::eyes::EyeMood::SlyLeft => {
+                draw_eye_pills(ui, cx, cy, -3.5, 6.5, 0.0);
+            }
+            poni_core::eyes::EyeMood::Read => {
+                ui.request_anim();
+                let read_offset = ((phase * 4.0).sin() * 3.5) as f32;
+                draw_eye_pills(ui, cx, cy, read_offset, 7.0, 2.0);
+            }
+            poni_core::eyes::EyeMood::Think => {
+                draw_eye_pills(ui, cx, cy, 2.5, 9.0, -2.5);
+            }
+            poni_core::eyes::EyeMood::Wave => {
+                draw_eye_pills(ui, cx, cy, look, 11.0, 0.0);
+            }
+        }
+    } else {
+        let blink = (st.now % BLINK_PERIOD) < BLINK_LEN;
+        let h = if blink { 2.5 } else { 11.0 };
+        draw_eye_pills(ui, cx, cy, look, h, 0.0);
+    }
+}
+
+pub fn draw_eye_pills(ui: &mut Ui, cx: f32, cy: f32, look: f32, h: f32, y_off: f32) {
+    for dx in [-11.0f32, 11.0] {
+        let c = Point::new(cx + dx + look, cy + y_off);
+        ui.c.fill_rrect(Rect::from_center(c, 6.5, h), (h / 2.0).min(3.25), Color::white(0.95));
+    }
+}
+
+pub fn draw_eye_smile(ui: &mut Ui, cx: f32, cy: f32) {
+    for dx in [-11.0f32, 11.0] {
+        let r = Rect::from_center(Point::new(cx + dx, cy + 1.0), 9.0, 6.0);
+        ui.c.stroke_rrect(r, 3.0, Color::white(0.95), 1.8);
+    }
+}
+
+pub fn draw_eye_sleep(ui: &mut Ui, cx: f32, cy: f32) {
+    for dx in [-11.0f32, 11.0] {
+        let c = Point::new(cx + dx, cy + 2.0);
+        ui.c.fill_rrect(Rect::from_center(c, 8.0, 2.2), 1.1, Color::white(0.95));
+    }
+}
+
+pub fn draw_battery_line(ui: &mut Ui, st: &AppState, body: Rect) {
+    if !poni_core::battery_line::should_show_battery_line(st.power.has_battery, st.settings.battery_line) {
+        return;
+    }
+    let bar_w = poni_core::battery_line::battery_bar_width(st.power.percent, body.w);
+    if bar_w <= 0.0 {
+        return;
+    }
+    let (r, g, b) = poni_core::battery_line::battery_bar_color(st.power.percent, st.power.charging);
+    let color = Color::hex(((r as u32) << 16) | ((g as u32) << 8) | (b as u32));
+    let line_rect = Rect::new(body.x, body.bottom() - 2.0, bar_w, 2.0);
+    ui.c.fill_rect(line_rect, color);
+}
+
+pub fn draw_privacy_dot(ui: &mut Ui, st: &AppState, body: Rect) {
+    if !st.settings.privacy_indicator {
+        return;
+    }
+    let Some(dot_color) = st.privacy.active_dot() else {
+        return;
+    };
+    let color = Color::hex(dot_color.hex());
+    let cy = body.center().y;
+    let cx = body.right() - 8.0;
+    let center = Point::new(cx, cy);
+    ui.c.fill_circle(center, 4.0, color.with_alpha(0.3));
+    ui.c.fill_circle(center, 2.5, color);
 }
 
 #[cfg(test)]

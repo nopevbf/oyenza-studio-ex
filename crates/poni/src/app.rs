@@ -445,6 +445,8 @@ pub struct App {
     raises_left: u8,
     /// Window classes already logged for covering the island (once each).
     covered_by: HashSet<String>,
+    last_cursor: Option<(i32, i32)>,
+    last_idle_tick: f64,
     shown: bool,
     stats_on: bool,
     /// The System page's sampler thread: from the start while its history is
@@ -682,6 +684,8 @@ impl App {
             top_windows: Vec::new(),
             raises_left: 0,
             covered_by: HashSet::new(),
+            last_cursor: None,
+            last_idle_tick: 0.0,
             shown: false,
             stats_on: false,
             sysmon: None,
@@ -981,6 +985,11 @@ impl App {
                 Some(LRESULT(0))
             }
             WM_MOUSEMOVE => {
+                let was_waving = self.st.idle_tracker.is_waving();
+                self.st.idle_tracker.tick(0.0, true);
+                if was_waving {
+                    self.request_frame();
+                }
                 let p = self.mouse_dip(lp);
                 if self.over_stale_mask(p) {
                     // The pointer is over a part of the hit mask the outline
@@ -1402,6 +1411,7 @@ impl App {
 
     /// Close it: the window, its renderer and its pixels go.
     fn close_settings_window(&mut self) {
+        self.st.update.clear_said();
         if self.settings_win.take().is_some() {
             pinfo!("settings window: closed");
         }
@@ -1413,6 +1423,11 @@ impl App {
         for _ in 0..4 {
             self.st.now = self.st.now.max(clock::mono());
             let now = self.st.now;
+            if self.st.update.tick(now) {
+                if let Some(w) = self.settings_win.as_mut() {
+                    w.view.dirty = true;
+                }
+            }
             let Some(w) = self.settings_win.as_mut() else { return };
             let before = w.view.section;
             let out = w.paint(&mut self.st, now, false);
@@ -2376,6 +2391,12 @@ impl App {
                     self.st.show_hud(HudKind::Volume { level, muted }, 1.6);
                 }
             }
+            AppEvent::Privacy(p) => {
+                if self.st.privacy != p {
+                    self.st.privacy = p;
+                    self.request_frame();
+                }
+            }
             AppEvent::Power(p) => {
                 let old = self.st.power;
                 self.st.power = p;
@@ -2682,7 +2703,7 @@ impl App {
                 self.st.page = self.st.ui.before_settings.take().filter(|p| pages::tabs(&self.st).contains(p)).unwrap_or_else(|| pages::first_tab(&self.st));
             }
             self.st.update.sheet = false;
-            self.st.update.said = None;
+            self.st.update.clear_said();
             // A notice that arrived while expanded gets its full time now.
             let min_until = self.st.now + 4.0;
             if let Some(n) = self.st.notice.as_mut() {
@@ -3445,6 +3466,22 @@ impl App {
     fn tick(&mut self) {
         self.check_recorder_alive();
         let now = self.st.now;
+        let mut pt = windows::Win32::Foundation::POINT::default();
+        let mouse_moved = if unsafe { windows::Win32::UI::WindowsAndMessaging::GetCursorPos(&mut pt) }.is_ok() {
+            let cur = (pt.x, pt.y);
+            let moved = self.last_cursor.map_or(false, |last| last != cur);
+            self.last_cursor = Some(cur);
+            moved
+        } else {
+            false
+        };
+        let was_waving = self.st.idle_tracker.is_waving();
+        let dt = if self.last_idle_tick > 0.0 { (now - self.last_idle_tick).max(0.0).min(1.0) } else { 0.016 };
+        self.last_idle_tick = now;
+        self.st.idle_tracker.tick(dt, mouse_moved);
+        if was_waving != self.st.idle_tracker.is_waving() {
+            self.request_frame();
+        }
         if let Some(h) = &self.st.hud {
             if now >= h.until {
                 self.st.hud = None;
@@ -3476,6 +3513,12 @@ impl App {
         // leave, as held money notices do, not for a peek.
         let peeks = self.st.game.active && self.st.settings.game_peek;
         if self.st.show_usage_notice(free && !peeks, self.expanded && self.st.page == PageKind::Ai) {
+            self.request_frame();
+        }
+        if self.st.update.tick(now) {
+            if let Some(w) = self.settings_win.as_mut() {
+                w.view.dirty = true;
+            }
             self.request_frame();
         }
         if let Some(ended) = self.st.pomodoro.tick(now) {
@@ -3964,6 +4007,9 @@ impl App {
         }
         if let Some(t) = &self.st.connectivity_toast {
             consider(t.expires_at());
+        }
+        if let Some(until) = self.st.update.said_until {
+            consider(until);
         }
         // While hidden for a full-screen app only the phase end matters.
         let visible = !self.fullscreen_hidden;
@@ -4688,7 +4734,7 @@ impl App {
             // Settings is never where the island opens next time.
             if p != PageKind::Settings {
                 self.st.update.sheet = false;
-                self.st.update.said = None;
+                self.st.update.clear_said();
                 self.st.store.last_page = p.key().to_string();
                 unsafe {
                     SetTimer(self.hwnd, TIMER_SAVE, 800, None);

@@ -232,6 +232,8 @@ pub enum Key {
     Clock24,
     SystemHistory,
     IdleLook,
+    PrivacyIndicator,
+    BatteryLine,
     HoverDelay,
     CloseDelay,
     Width,
@@ -411,6 +413,13 @@ pub fn blocks(section: Section, st: &AppState) -> Vec<Block> {
                 Block::Group(
                     Some("Island at rest"),
                     vec![item(Key::IdleLook, "Idle look", Some("What the closed island shows"), Ctl::Choice(look_names, looks.iter().position(|l| *l == shown)))],
+                ),
+                Block::Group(
+                    Some("Indicators"),
+                    vec![
+                        switch(Key::PrivacyIndicator, "Privacy indicator", Some("Shows a green/orange dot for active camera/mic"), s.privacy_indicator),
+                        switch(Key::BatteryLine, "Battery status line", Some("Shows a thin battery level indicator along the bottom edge"), s.battery_line),
+                    ],
                 ),
             ]
         }
@@ -597,6 +606,8 @@ pub fn apply(st: &mut AppState, key: Key, act: Act) {
             Act::Pick(i) if i < FULLSCREEN.len() => s.hide_in_fullscreen = FULLSCREEN[i].0,
             _ => return,
         },
+        Key::PrivacyIndicator => s.privacy_indicator = !s.privacy_indicator,
+        Key::BatteryLine => s.battery_line = !s.battery_line,
         Key::GameStats => s.game_stats = !s.game_stats,
         Key::GamePeek => s.game_peek = !s.game_peek,
         Key::Lyrics => s.lyrics = !s.lyrics,
@@ -1368,6 +1379,20 @@ mod tests {
         assert!(!sections(&st).contains(&Section::Prayer));
         assert_eq!(sections(&st).first(), Some(&Section::General));
         assert_eq!(sections(&st).last(), Some(&Section::About));
+    }
+
+
+    #[test]
+    fn appearance_section_has_privacy_and_battery_toggles() {
+        let mut st = state();
+        assert!(st.settings.privacy_indicator);
+        assert!(!st.settings.battery_line);
+
+        apply(&mut st, Key::PrivacyIndicator, Act::Toggle);
+        assert!(!st.settings.privacy_indicator);
+
+        apply(&mut st, Key::BatteryLine, Act::Toggle);
+        assert!(st.settings.battery_line);
     }
 
     #[test]

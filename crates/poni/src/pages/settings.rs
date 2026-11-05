@@ -139,9 +139,14 @@ pub fn height(st: &AppState) -> f32 {
     }
 }
 
-/// While a sign-in code waits, its time left counts down each second.
+/// While a sign-in code waits, its time left counts down each second; Up to date resets after 3s.
 pub fn next_wake(st: &AppState) -> Option<f64> {
-    matches!(st.oyenza.link, OyenzaLink::Connecting { .. }).then(|| st.now.floor() + 1.0)
+    let link_wake = matches!(st.oyenza.link, OyenzaLink::Connecting { .. }).then(|| st.now.floor() + 1.0);
+    match (link_wake, st.update.said_until) {
+        (Some(a), Some(b)) => Some(a.min(b)),
+        (Some(a), None) | (None, Some(a)) => Some(a),
+        (None, None) => None,
+    }
 }
 
 pub fn draw(ui: &mut Ui, st: &mut AppState, area: Rect) {
@@ -338,7 +343,7 @@ pub(crate) fn draw_check(ui: &mut Ui, st: &mut AppState, b: Rect) {
     }
     ui.c.text(text, b, &check_text().color(color).center());
     if resp.clicked {
-        st.update.said = Some(Said::Checking);
+        st.update.set_said(Said::Checking, st.now);
         st.cmd(Command::CheckForUpdates);
     }
 }

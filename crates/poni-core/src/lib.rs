@@ -10,8 +10,10 @@
 pub mod addons;
 pub mod agenda;
 pub mod applemusic;
+pub mod battery_line;
 pub mod datetime;
 pub mod downloads;
+pub mod eyes;
 pub mod frames;
 pub mod frametime;
 pub mod geom;
@@ -34,6 +36,7 @@ pub mod phonedrop;
 pub mod pomodoro;
 pub mod power;
 pub mod prayer;
+pub mod privacy;
 pub mod recorder;
 pub mod romanize;
 pub mod script;

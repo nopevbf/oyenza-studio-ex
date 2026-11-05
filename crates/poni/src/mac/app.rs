@@ -895,6 +895,9 @@ impl App {
         if let Some(n) = &self.st.notice {
             consider(n.until);
         }
+        if let Some(until) = self.st.update.said_until {
+            consider(until);
+        }
         // While a full-screen app hides the island only the phase end matters.
         if let Some(b) = self.st.pomodoro.next_second_boundary(now).filter(|_| !hidden) {
             consider(now + b + 0.005);
@@ -1172,6 +1175,7 @@ impl App {
 
     /// The Settings window closed: its content and renderer go.
     fn settings_closed(&mut self) {
+        self.st.update.clear_said();
         if self.settings_ui.take().is_some() {
             pinfo!("settings window: closed");
         }
@@ -1747,6 +1751,7 @@ impl App {
             }
             AppEvent::Oyenza(ev) => self.on_oyenza(ev),
             AppEvent::Connectivity(_) => {}
+            AppEvent::Privacy(_) => {}
         }
         if let Some(before) = media_before {
             self.after_media_change(before, now);
@@ -2567,7 +2572,7 @@ impl App {
                 self.st.page = self.st.ui.before_settings.take().filter(|p| pages::tabs(&self.st).contains(p)).unwrap_or_else(|| pages::first_tab(&self.st));
             }
             self.st.update.sheet = false;
-            self.st.update.said = None;
+            self.st.update.clear_said();
             // A notice that arrived while expanded gets its full time now.
             let min_until = self.st.now + 4.0;
             if let Some(n) = self.st.notice.as_mut() {
@@ -2583,7 +2588,7 @@ impl App {
             // Settings is never where the island opens next time.
             if p != PageKind::Settings {
                 self.st.update.sheet = false;
-                self.st.update.said = None;
+                self.st.update.clear_said();
                 self.st.store.last_page = p.key().to_string();
                 self.set_timer(Timer::Save, 800);
             } else {
@@ -3374,6 +3379,12 @@ impl App {
         // The AI tab's heads-up notices wait the same way, one at a time, and
         // while a full-screen app hides the island.
         if self.st.show_usage_notice(free && !self.fullscreen_hidden, self.expanded && self.st.page == PageKind::Ai) {
+            self.request_frame();
+        }
+        if self.st.update.tick(now) {
+            if let Some(s) = self.settings_ui.as_mut() {
+                s.view.dirty = true;
+            }
             self.request_frame();
         }
         if let Some(ended) = self.st.pomodoro.tick(now) {

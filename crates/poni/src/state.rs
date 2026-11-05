@@ -232,6 +232,36 @@ pub struct UpdateView {
     /// What Settings says in Check now's place since it was clicked, until
     /// the island closes or the page changes.
     pub said: Option<Said>,
+    /// When Up to date was said, reset to None at this time (mono seconds).
+    pub said_until: Option<f64>,
+}
+
+impl UpdateView {
+    pub const UP_TO_DATE_S: f64 = 3.0;
+
+    pub fn set_said(&mut self, said: Said, now: f64) {
+        self.said = Some(said);
+        self.said_until = if said == Said::UpToDate {
+            Some(now + Self::UP_TO_DATE_S)
+        } else {
+            None
+        };
+    }
+
+    pub fn clear_said(&mut self) {
+        self.said = None;
+        self.said_until = None;
+    }
+
+    pub fn tick(&mut self, now: f64) -> bool {
+        if let Some(until) = self.said_until {
+            if now >= until {
+                self.clear_said();
+                return true;
+            }
+        }
+        false
+    }
 }
 
 /// Check now's answer in Settings.
@@ -777,6 +807,8 @@ pub struct AppState {
     pub pomodoro: Pomodoro,
     pub volume: VolumeState,
     pub power: PowerState,
+    pub privacy: poni_core::privacy::PrivacyState,
+    pub idle_tracker: poni_core::eyes::IdleTracker,
     pub hud: Option<Hud>,
     pub bt_audio_suppress_volume_until: f64,
     pub connectivity_toast: Option<crate::connectivity::toast::ConnectivityToast>,
@@ -897,6 +929,8 @@ impl AppState {
             pomodoro,
             volume: VolumeState::default(),
             power: PowerState::default(),
+            privacy: poni_core::privacy::PrivacyState::default(),
+            idle_tracker: poni_core::eyes::IdleTracker::default(),
             hud: None,
             bt_audio_suppress_volume_until: 0.0,
             connectivity_toast: None,
@@ -1260,6 +1294,33 @@ impl AppState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn update_view_resets_up_to_date_after_three_seconds() {
+        let mut u = UpdateView::default();
+        u.set_said(Said::UpToDate, 100.0);
+        assert_eq!(u.said, Some(Said::UpToDate));
+        assert_eq!(u.said_until, Some(103.0));
+
+        // Before 3 seconds: stays UpToDate
+        assert!(!u.tick(102.9));
+        assert_eq!(u.said, Some(Said::UpToDate));
+
+        // At or after 3 seconds: tick returns true and resets to None
+        assert!(u.tick(103.0));
+        assert_eq!(u.said, None);
+        assert_eq!(u.said_until, None);
+        assert!(!u.tick(104.0));
+    }
+
+    #[test]
+    fn update_view_clear_said_resets_both_fields() {
+        let mut u = UpdateView::default();
+        u.set_said(Said::UpToDate, 100.0);
+        u.clear_said();
+        assert_eq!(u.said, None);
+        assert_eq!(u.said_until, None);
+    }
 
     #[test]
     fn phone_panel_holds_only_while_a_code_waits_on_the_shelf() {

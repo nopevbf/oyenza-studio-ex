@@ -138,6 +138,7 @@ pub enum AppEvent {
     /// Master volume changed (0..=1).
     Volume { level: f32, muted: bool, switched: bool },
     Power(PowerState),
+    Privacy(poni_core::privacy::PrivacyState),
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },
     /// A Wi-Fi interface connected to or disconnected from a network.
     Wifi { ssid: String, connected: bool },

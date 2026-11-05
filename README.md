@@ -6,12 +6,20 @@
 > Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
 > 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
 > 
-> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.0**, berisi patch & fitur tambahan di atas vanilla release tersebut.
+> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.1**, berisi patch & fitur tambahan di atas vanilla release tersebut.
 > 
 > ---
 > 
-> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.0)
+> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.1)
 > Gak cuma sekadar fork kosongan, di versi ini udah disuntik beberapa fitur racikan mantap:
+> - 🔒 **Privacy Dot Indicator (Kamera & Mikrofon - Baru di v1.2.1)**:
+>   - Titik privasi hijau cerah (kamera) dan oranye (mic) di sisi kanan Island berbasis Windows CapabilityAccessManager ConsentStore secara *event-driven* (0% CPU at rest).
+>   - Prioritas kamera otomatis jika kamera dan mic aktif bersamaan. Dapat diaktifkan/dinonaktifkan di Settings > Appearance.
+> - 👀 **Dynamic Eyes & Idle Glove Wave (Baru di v1.2.1)**:
+>   - Tampilan mata pada IdleStyle::Eyes kini memiliki ragam ekspresi emosional acak saat idle (blink, flutter, squint, smile, sleep, sly, read, think).
+>   - Saat kursor tidak bergerak selama 30 detik, Island melebar dan sepasang sarung tangan kartun putih muncul melambai menyapa selama 2.5 detik lalu istirahat. Langsung berhenti jika kursor digerakkan.
+> - 🔋 **Battery Status Line (Baru di v1.2.1)**:
+>   - Garis tipis 2px di bawah island yang mencerminkan sisa daya baterai laptop secara real-time (hijau/kuning/merah). Dapat diaktifkan lewat Settings > Appearance.
 > - 📅 **Calendar Island Countdown & Event Reminder (Baru di v1.2.0)**:
 >   - Countdown otomatis di island tertutup saat jadwal mendekat sisa 3 menit (bisa diatur di Settings: Popups > Calendar countdown).
 >   - Tampilan seragam dengan sistem jelang azan: ikon kalender, judul agenda (atau jumlah acara jika bentrok), sisa menit, dan tombol pill **`[OK]`**.

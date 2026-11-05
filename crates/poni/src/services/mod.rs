@@ -27,6 +27,7 @@ pub mod oyenza;
 pub mod pairdrop;
 pub mod phonedrop;
 pub mod power;
+pub mod privacy;
 pub mod psu;
 pub mod recorder;
 pub mod romanize;
@@ -58,6 +59,7 @@ pub struct Services {
     _bluetooth_pnp: Option<crate::connectivity::watcher::BluetoothPnpWatcher>,
     _wifi: Option<wifi::WifiService>,
     _ethernet: Option<crate::connectivity::watcher::EthernetWatcher>,
+    _privacy: Option<privacy::PrivacyService>,
     fullscreen: Option<fullscreen::FullscreenWatcher>,
     oyenza: Option<oyenza::OyenzaService>,
     pairdrop: Option<pairdrop::PairDropService>,
@@ -94,6 +96,7 @@ impl Services {
         let bluetooth_pnp = started("bluetooth-pnp", crate::connectivity::watcher::BluetoothPnpWatcher::start(sink.clone()));
         let wifi = started("wifi", wifi::WifiService::start(sink.clone()));
         let ethernet = started("ethernet", crate::connectivity::watcher::EthernetWatcher::start(sink.clone()));
+        let privacy = started("privacy", privacy::PrivacyService::start(sink.clone()));
         let fullscreen = started("fullscreen", fullscreen::FullscreenWatcher::start(helper, sink.clone()));
         // Idle (no calls) until the person signs in to Oyenza from the tray.
         let oyenza = started("oyenza", oyenza::OyenzaService::start(sink.clone(), activity));
@@ -111,7 +114,7 @@ impl Services {
             .map(|a| a.id)
             .collect();
         let addons = started("add-ons", addons::AddonService::start(sink.clone(), on));
-        Self { media, lyrics, _audio: audio, _bluetooth: bluetooth, _bluetooth_pnp: bluetooth_pnp, _wifi: wifi, _ethernet: ethernet, fullscreen, oyenza, pairdrop, addons, stocks: std::cell::OnceCell::new(), usage: std::cell::OnceCell::new(), downloader: std::cell::OnceCell::new(), sink: sink.clone() }
+        Self { media, lyrics, _audio: audio, _bluetooth: bluetooth, _bluetooth_pnp: bluetooth_pnp, _wifi: wifi, _ethernet: ethernet, _privacy: privacy, fullscreen, oyenza, pairdrop, addons, stocks: std::cell::OnceCell::new(), usage: std::cell::OnceCell::new(), downloader: std::cell::OnceCell::new(), sink: sink.clone() }
     }
 
     pub fn stop(self, _helper: HWND) {

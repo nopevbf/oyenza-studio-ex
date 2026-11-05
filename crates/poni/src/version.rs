@@ -52,13 +52,13 @@ mod tests {
 
     #[test]
     fn a_release_opens_its_notes_and_a_test_build_its_commit() {
-        assert_eq!(url("1.2.0", "release", "c7d77c8"), "https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.0");
-        assert_eq!(url("1.2.0", "test", "c7d77c8"), "https://github.com/nopevbf/oyenza-studio-ex/commit/c7d77c8");
-        assert_eq!(url("1.2.0", "local", ""), "https://github.com/nopevbf/oyenza-studio-ex/releases");
+        assert_eq!(url("1.2.1", "release", "c7d77c8"), "https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.1");
+        assert_eq!(url("1.2.1", "test", "c7d77c8"), "https://github.com/nopevbf/oyenza-studio-ex/commit/c7d77c8");
+        assert_eq!(url("1.2.1", "local", ""), "https://github.com/nopevbf/oyenza-studio-ex/releases");
     }
 
     #[test]
-    fn test_version_is_1_2_0() {
-        assert_eq!(VERSION, "1.2.0");
+    fn test_version_is_1_2_1() {
+        assert_eq!(VERSION, "1.2.1");
     }
 }

@@ -164,7 +164,7 @@ impl Updater {
         if !read {
             self.asked = None;
             if in_settings {
-                st.update.said = Some(Said::Failed);
+                st.update.set_said(Said::Failed, st.now);
             } else {
                 st.notify(Icon::Unlink, palette::ORANGE, "Couldn't check for updates", "Check the connection and try again.", ANSWER_S, None);
             }
@@ -173,14 +173,14 @@ impl Updater {
         let Some(rel) = st.update.offer.clone() else {
             self.asked = None;
             if in_settings {
-                st.update.said = Some(Said::UpToDate);
+                st.update.set_said(Said::UpToDate, st.now);
             } else {
                 st.notify(Icon::CheckCircle, palette::GREEN, "Oyenza Studio is up to date", format!("{VERSION} is the latest version."), ANSWER_S, None);
             }
             return false;
         };
         // Settings now has the new version's row, with Update.
-        st.update.said = None;
+        st.update.clear_said();
         // A copy that installs: the sheet waits for the download (the Setup
         // on Windows, the app out of the DMG on a Mac), downloading now (or
         // tried again after a failed download). From Settings, its new row
@@ -664,7 +664,12 @@ mod tests {
         u.begin();
         assert!(!u.checked(&mut st, Ok(this), now));
         assert_eq!(st.update.said, Some(Said::UpToDate));
+        assert_eq!(st.update.said_until, Some(st.now + 3.0));
         assert!(st.notice.is_none());
+        assert!(!st.update.tick(st.now + 2.9));
+        assert_eq!(st.update.said, Some(Said::UpToDate));
+        assert!(st.update.tick(st.now + 3.0));
+        assert_eq!(st.update.said, None);
         st.update.said = Some(Said::Checking);
         assert!(u.ask(now));
         u.begin();
