@@ -51,3 +51,13 @@ On a tag, the `mac` workflow's `sign` job signs the DMG with the Developer ID, h
 Every deploy of the website also carries `studio.oyenza.com/latest.json`, the signed file every copy of the app reads to learn that a new version is out ([docs/updates.md](docs/updates.md)). It describes GitHub's latest release, so a release updates it without a step of yours. The `UPDATE_FEED_KEY` secret that signs it stays in the `release` environment, like the Mac signing secrets: never print it or move it.
 
 To try the release path without releasing, run `ci` by hand with `release_dry_run` on (`gh workflow run ci.yml --ref <branch> -f release_dry_run=true`). It runs every job a tag runs and publishes nothing: no tag, release or issue, and no website deploy. Its summary says what a tag would publish and what would happen to the website.
+
+## Release changelog & README rules
+
+Every version update or release MUST strictly follow these README formatting rules:
+- **Show only the latest version directly:** List the newest version's changes/features openly in `README.md` (e.g. v1.2.2).
+- **Exactly one previous version dropdown:** Put exactly one `<details>` collapsible dropdown containing only the immediate previous version's features (e.g. v1.2.1).
+- **No detailed feature listing for versions below that:** Under the previous version inside the dropdown, add a single summary note stating that all prior releases (e.g. v1.2.0, v1.1.0, and upstream v0.2.x) are included, without listing their individual features.
+- **Donation section stays outside:** "Traktir Kopi Dulu Bosque (Buy Me a Coffee via QRIS)" must ALWAYS remain outside and after the dropdown, never nested inside `<details>`.
+- **Signed update feed required:** Always ensure `site/latest.json` is updated and signed for the release version (enforced by `update_feed_tests`).
+
