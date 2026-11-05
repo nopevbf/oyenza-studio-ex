@@ -9,6 +9,9 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{CloseHandle, HANDLE, WAIT_OBJECT_0};
+use windows::Win32::System::Diagnostics::ToolHelp::{
+    CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W, TH32CS_SNAPPROCESS,
+};
 use windows::Win32::System::Registry::{
     RegCloseKey, RegEnumKeyExW, RegNotifyChangeKeyValue, RegOpenKeyExW, RegQueryValueExW, HKEY,
     HKEY_CURRENT_USER, KEY_NOTIFY, KEY_READ, REG_NOTIFY_CHANGE_LAST_SET,
@@ -187,7 +190,7 @@ fn is_key_tree_active(root: HKEY) -> bool {
                 }
             } else {
                 // Direct subkey (UWP app)
-                let active = is_app_active(child_hkey);
+                let active = is_app_active(child_hkey, None);
                 unsafe { let _ = RegCloseKey(child_hkey); }
                 if active {
                     return true;
@@ -232,7 +235,8 @@ fn scan_app_keys(parent: HKEY) -> bool {
                 &mut app_hkey,
             )
         }.is_ok() {
-            let active = is_app_active(app_hkey);
+            let subkey_slice = &name_buf[..name_len as usize];
+            let active = is_app_active(app_hkey, Some(subkey_slice));
             unsafe { let _ = RegCloseKey(app_hkey); }
             if active {
                 return true;
@@ -243,7 +247,7 @@ fn scan_app_keys(parent: HKEY) -> bool {
     false
 }
 
-fn is_app_active(app_hkey: HKEY) -> bool {
+fn is_app_active(app_hkey: HKEY, key_name: Option<&[u16]>) -> bool {
     // Check LastUsedTimeStop: if 0 and LastUsedTimeStart > 0, it is actively in use!
     let mut stop_time = 0u64;
     let mut size = std::mem::size_of::<u64>() as u32;
@@ -274,11 +278,60 @@ fn is_app_active(app_hkey: HKEY) -> bool {
             )
         };
         if start_res.is_ok() && start_time > 0 {
+            // Rule 1: If key_name is provided (e.g. NonPackaged app path encoded with '#'),
+            // verify that the process is actually running using ToolHelp32 snapshot.
+            if let Some(name_slice) = key_name {
+                if let Some(exe_name) = extract_exe_name(name_slice) {
+                    if !is_process_running(&exe_name) {
+                        return false;
+                    }
+                }
+            }
             return true;
         }
     }
 
     false
+}
+
+fn extract_exe_name(key_name: &[u16]) -> Option<String> {
+    let s = String::from_utf16_lossy(key_name);
+    let last = s.rsplit(['#', '\\', '/']).next()?;
+    if last.to_lowercase().ends_with(".exe") {
+        Some(last.to_string())
+    } else {
+        None
+    }
+}
+
+fn is_process_running(target_exe: &str) -> bool {
+    unsafe {
+        let snap = match CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) {
+            Ok(s) => s,
+            Err(_) => return true, // fallback to true if snapshot fails
+        };
+        let mut entry = PROCESSENTRY32W {
+            dwSize: std::mem::size_of::<PROCESSENTRY32W>() as u32,
+            ..Default::default()
+        };
+        let mut found = false;
+        if Process32FirstW(snap, &mut entry).is_ok() {
+            loop {
+                let sz_exe = &entry.szExeFile;
+                let len = sz_exe.iter().position(|&c| c == 0).unwrap_or(sz_exe.len());
+                let exe_name = String::from_utf16_lossy(&sz_exe[..len]);
+                if exe_name.eq_ignore_ascii_case(target_exe) {
+                    found = true;
+                    break;
+                }
+                if Process32NextW(snap, &mut entry).is_err() {
+                    break;
+                }
+            }
+        }
+        let _ = CloseHandle(snap);
+        found
+    }
 }
 
 fn is_utf16_equal(slice: &[u16], s: &str) -> bool {

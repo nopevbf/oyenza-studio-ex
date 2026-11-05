@@ -3475,12 +3475,26 @@ impl App {
         } else {
             false
         };
+        let is_away = self.locked || self.display_off;
         let was_waving = self.st.idle_tracker.is_waving();
-        let dt = if self.last_idle_tick > 0.0 { (now - self.last_idle_tick).max(0.0).min(1.0) } else { 0.016 };
+        let dt = if is_away {
+            0.0
+        } else if self.last_idle_tick > 0.0 {
+            (now - self.last_idle_tick).max(0.0).min(1.0)
+        } else {
+            0.016
+        };
         self.last_idle_tick = now;
-        self.st.idle_tracker.tick(dt, mouse_moved);
-        if was_waving != self.st.idle_tracker.is_waving() {
-            self.request_frame();
+        if is_away {
+            if was_waving {
+                self.st.idle_tracker.reset();
+                self.request_frame();
+            }
+        } else {
+            self.st.idle_tracker.tick(dt, mouse_moved);
+            if was_waving != self.st.idle_tracker.is_waving() {
+                self.request_frame();
+            }
         }
         if let Some(h) = &self.st.hud {
             if now >= h.until {

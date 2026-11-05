@@ -302,7 +302,8 @@ pub fn geom(m: &Mode, st: &AppState) -> Geom {
             // A little taller than the eyes, so his ears clear the top edge.
             IdleStyle::Eyes if oyen::on(st.settings.theme) => Geom::new(104.0, 36.0, 16.0),
             IdleStyle::Eyes => {
-                if st.idle_tracker.is_waving() {
+                let pure_idle = st.media.is_none() && st.notice.is_none() && st.hud.is_none();
+                if pure_idle && st.idle_tracker.is_waving() {
                     Geom::new(160.0, 36.0, 18.0)
                 } else {
                     Geom::new(118.0, 30.0, 14.0)
@@ -1188,7 +1189,12 @@ pub fn draw_dynamic_eyes(ui: &mut Ui, st: &mut AppState, body: Rect, look: f32) 
     let cx = body.center().x;
     let cy = body.center().y;
 
-    if st.idle_tracker.is_waving() {
+    let pure_idle = st.media.is_none() && st.notice.is_none() && st.hud.is_none();
+    if !pure_idle && st.idle_tracker.is_waving() {
+        st.idle_tracker.reset();
+    }
+
+    if pure_idle && st.idle_tracker.is_waving() {
         ui.request_anim();
         let (glove, cuff) = get_glove_segs();
         let t = st.now;
@@ -1275,6 +1281,10 @@ pub fn draw_eye_sleep(ui: &mut Ui, cx: f32, cy: f32) {
 
 pub fn draw_battery_line(ui: &mut Ui, st: &AppState, body: Rect) {
     if !poni_core::battery_line::should_show_battery_line(st.power.has_battery, st.settings.battery_line) {
+        return;
+    }
+    // Filter transient 0% reading when on AC power and not charging (e.g. system wake delay)
+    if st.power.percent == 0 && st.power.on_ac && !st.power.charging {
         return;
     }
     let bar_w = poni_core::battery_line::battery_bar_width(st.power.percent, body.w);

@@ -112,6 +112,7 @@ pub enum AppEvent {
     /// (headphones connected, say), not its volume.
     Volume { level: f32, muted: bool, switched: bool },
     Power(PowerState),
+    Privacy(poni_core::privacy::PrivacyState),
     Bluetooth { name: String, connected: bool, battery: Option<u8>, audio: bool },
     Connectivity(crate::connectivity::model::ConnEvent),
     /// A full-screen app took over (or left) the island's screen.
