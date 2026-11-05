@@ -467,7 +467,7 @@ pub fn draw(ui: &mut Ui, st: &mut AppState, m: &Mode, body: Rect) {
             Mode::Expanded(_) | Mode::Aside => {}
         }
     }
-    draw_battery_line(ui, st, body);
+    draw_battery_line(ui, st, m, body);
     draw_privacy_dot(ui, st, body);
 }
 
@@ -1279,7 +1279,7 @@ pub fn draw_eye_sleep(ui: &mut Ui, cx: f32, cy: f32) {
     }
 }
 
-pub fn draw_battery_line(ui: &mut Ui, st: &AppState, body: Rect) {
+pub fn draw_battery_line(ui: &mut Ui, st: &AppState, m: &Mode, body: Rect) {
     if !poni_core::battery_line::should_show_battery_line(st.power.has_battery, st.settings.battery_line) {
         return;
     }
@@ -1287,14 +1287,16 @@ pub fn draw_battery_line(ui: &mut Ui, st: &AppState, body: Rect) {
     if st.power.percent == 0 && st.power.on_ac && !st.power.charging {
         return;
     }
-    let bar_w = poni_core::battery_line::battery_bar_width(st.power.percent, body.w);
-    if bar_w <= 0.0 {
-        return;
-    }
     let (r, g, b) = poni_core::battery_line::battery_bar_color(st.power.percent, st.power.charging);
     let color = Color::hex(((r as u32) << 16) | ((g as u32) << 8) | (b as u32));
-    let line_rect = Rect::new(body.x, body.bottom() - 2.0, bar_w, 2.0);
-    ui.c.fill_rect(line_rect, color);
+    let radius = geom(m, st).r;
+    // Inset slightly by half the stroke width (1.0 DIP) so the rounded 2px stroke sits cleanly inside the island boundary
+    let inset_body = Rect::new(body.x + 1.0, body.y, (body.w - 2.0).max(0.0), (body.h - 1.0).max(0.0));
+    let inset_r = (radius - 1.0).max(0.0);
+    let segs = poni_core::battery_line::battery_contour_segments(inset_body, inset_r, st.power.percent);
+    if !segs.is_empty() {
+        ui.c.path(&segs, None, Some((color, 2.0)));
+    }
 }
 
 pub fn draw_privacy_dot(ui: &mut Ui, st: &AppState, body: Rect) {

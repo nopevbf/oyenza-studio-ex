@@ -14,7 +14,7 @@ use windows::Win32::System::Diagnostics::ToolHelp::{
 };
 use windows::Win32::System::Registry::{
     RegCloseKey, RegEnumKeyExW, RegNotifyChangeKeyValue, RegOpenKeyExW, RegQueryValueExW, HKEY,
-    HKEY_CURRENT_USER, KEY_NOTIFY, KEY_READ, REG_NOTIFY_CHANGE_LAST_SET,
+    HKEY_CURRENT_USER, KEY_NOTIFY, KEY_READ, REG_NOTIFY_CHANGE_LAST_SET, REG_NOTIFY_CHANGE_NAME,
 };
 use windows::Win32::System::Threading::{CreateEventW, SetEvent, WaitForMultipleObjects, INFINITE};
 
@@ -88,15 +88,16 @@ fn run_watcher(sink: EventSink, stop: Arc<AtomicBool>, stop_event: HANDLE) {
     sink.send(AppEvent::Privacy(last_state));
 
     while !stop.load(Ordering::SeqCst) {
-        // Arm notifications (watching the whole subtree so subkey app changes trigger it)
+        // Arm notifications (watching the whole subtree so subkey app changes and key additions trigger it)
+        let filter = REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_NAME;
         if cam_ok {
             unsafe {
-                let _ = RegNotifyChangeKeyValue(cam_hkey, true, REG_NOTIFY_CHANGE_LAST_SET, cam_event, true);
+                let _ = RegNotifyChangeKeyValue(cam_hkey, true, filter, cam_event, true);
             }
         }
         if mic_ok {
             unsafe {
-                let _ = RegNotifyChangeKeyValue(mic_hkey, true, REG_NOTIFY_CHANGE_LAST_SET, mic_event, true);
+                let _ = RegNotifyChangeKeyValue(mic_hkey, true, filter, mic_event, true);
             }
         }
 
@@ -248,47 +249,46 @@ fn scan_app_keys(parent: HKEY) -> bool {
 }
 
 fn is_app_active(app_hkey: HKEY, key_name: Option<&[u16]>) -> bool {
-    // Check LastUsedTimeStop: if 0 and LastUsedTimeStart > 0, it is actively in use!
-    let mut stop_time = 0u64;
-    let mut size = std::mem::size_of::<u64>() as u32;
+    let mut start_time = 0u64;
+    let mut start_size = std::mem::size_of::<u64>() as u32;
+    let start_res = unsafe {
+        RegQueryValueExW(
+            app_hkey,
+            w!("LastUsedTimeStart"),
+            None,
+            None,
+            Some(&mut start_time as *mut u64 as *mut u8),
+            Some(&mut start_size),
+        )
+    };
 
-    let res = unsafe {
+    let mut stop_time = 0u64;
+    let mut stop_size = std::mem::size_of::<u64>() as u32;
+    let stop_res = unsafe {
         RegQueryValueExW(
             app_hkey,
             w!("LastUsedTimeStop"),
             None,
             None,
             Some(&mut stop_time as *mut u64 as *mut u8),
-            Some(&mut size),
+            Some(&mut stop_size),
         )
     };
 
-    if res.is_ok() && stop_time == 0 {
-        // Double check LastUsedTimeStart to ensure it's not an unused stub
-        let mut start_time = 0u64;
-        let mut start_size = std::mem::size_of::<u64>() as u32;
-        let start_res = unsafe {
-            RegQueryValueExW(
-                app_hkey,
-                w!("LastUsedTimeStart"),
-                None,
-                None,
-                Some(&mut start_time as *mut u64 as *mut u8),
-                Some(&mut start_size),
-            )
-        };
-        if start_res.is_ok() && start_time > 0 {
-            // Rule 1: If key_name is provided (e.g. NonPackaged app path encoded with '#'),
-            // verify that the process is actually running using ToolHelp32 snapshot.
-            if let Some(name_slice) = key_name {
-                if let Some(exe_name) = extract_exe_name(name_slice) {
-                    if !is_process_running(&exe_name) {
-                        return false;
-                    }
+    let effective_start = if start_res.is_ok() { start_time } else { 0 };
+    let effective_stop = if stop_res.is_ok() { stop_time } else { 0 };
+
+    if poni_core::privacy::is_usage_active(effective_start, effective_stop) {
+        // Rule 1: If key_name is provided (e.g. NonPackaged app path encoded with '#'),
+        // verify that the process is actually running using ToolHelp32 snapshot.
+        if let Some(name_slice) = key_name {
+            if let Some(exe_name) = extract_exe_name(name_slice) {
+                if !is_process_running(&exe_name) {
+                    return false;
                 }
             }
-            return true;
         }
+        return true;
     }
 
     false

@@ -6,12 +6,26 @@
 > Biar berkah dan adil, **tetap dukung developer aslinya (Luca Cadalora)** ya! Mampir ke repo resminya, kasih bintang (⭐), atau cobain rilis vanilla-nya di sini:
 > 👉 **Upstream Repository:** [**github.com/lucacadalora/oyenza-studio**](https://github.com/lucacadalora/oyenza-studio)
 > 
-> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.1**, berisi patch & fitur tambahan di atas vanilla release tersebut.
+> 📌 **Versi ini berbasis pada upstream `v0.2.19`** (commit [`aa0d1d4`](https://github.com/lucacadalora/oyenza-studio/commit/aa0d1d4aa0fdf051a483831cb4e309d84c517c45)) — versi fork ini dinamain **v1.2.2**, berisi patch & fitur tambahan di atas vanilla release tersebut.
 > 
 > ---
 > 
-> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.1)
-> Gak cuma sekadar fork kosongan, di versi **v1.2.1** ini udah disuntik fitur-fitur baru yang bikin notch makin hidup dan informatif:
+> ### ✨ Apa Aja yang Baru & Berubah di Versi Edit Ini? (v1.2.2)
+> Gak cuma sekadar fork kosongan, di versi **v1.2.2** ini membawa penyempurnaan desain dinamis dan keandalan sensor privasi:
+> - 🔋 **Dynamic Notch-Following Battery Indicator (Baru di v1.2.2)**:
+>   - Indikator baterai kini tampil dinamis dan mengalir anggun mengikuti lengkungan kontur bawah notch/island (busur sudut kiri, dasar notch datar, dan busur sudut kanan) dengan ujung membulat halus (*round stroke*), bukan lagi garis balok datar kaku.
+> - 🔒 **Enhanced Camera & Mic Privacy Detection for External Webcams (Baru di v1.2.2)**:
+>   - Memperbaiki deteksi aktivitas kamera & mikrofon eksternal (USB webcam, audio interface, browser, OBS, Zoom, Teams) pada Windows 11 dengan evaluasi timestamps sesi aktif start_time > stop_time dan pemantauan penambahan subkey registry (REG_NOTIFY_CHANGE_NAME).
+> - 👀 **Dynamic Eyes & Idle Glove Wave (v1.2.1)**:
+>   - Ragam ekspresi emosional acak saat idle (*blink, flutter, squint, smile, sleep, sly, read, think*) dan animasi ramah lambaian sarung tangan kartun (*glove wave*) setelah 30 detik kursor diam.
+>
+> ---
+>
+> <details>
+> <summary>📦 <b>Termasuk semua pembaruan dari versi v1.2.1, v1.2.0 dan sebelumnya (Klik untuk lihat detail)</b></summary>
+>
+> > - 🔒 **Privacy Dot Indicator (v1.2.1)**: Titik privasi hijau cerah (kamera) dan oranye (mikrofon) di sisi kanan Island berbasis Windows CapabilityAccessManager ConsentStore secara event-driven (0% CPU at rest).
+> > - 🔋 **Battery Status Line (v1.2.1)**: Indikator sisa daya baterai laptop secara real-time (hijau / kuning / merah) di Settings › Appearance. fitur-fitur baru yang bikin notch makin hidup dan informatif:
 > - 🔒 **Privacy Dot Indicator (Kamera & Mikrofon)**:
 >   - Titik privasi hijau cerah (kamera) dan oranye (mikrofon) di sisi kanan Island berbasis Windows *CapabilityAccessManager ConsentStore* secara *event-driven* (0% CPU at rest).
 >   - Prioritas kamera otomatis aktif jika kamera & mic berjalan bersamaan. Dapat diatur lewat **Settings › Appearance**.

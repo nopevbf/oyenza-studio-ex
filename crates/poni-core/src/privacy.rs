@@ -27,6 +27,13 @@ impl PrivacyColor {
     }
 }
 
+/// Determines whether a hardware sensor (camera/mic) capability session is actively in use.
+/// Evaluates both traditional active sessions (stop_time == 0) and modern sessions
+/// where a new session start timestamp exceeds the previous stop timestamp (start_time > stop_time).
+pub const fn is_usage_active(start_time: u64, stop_time: u64) -> bool {
+    (stop_time == 0 && start_time > 0) || (start_time > stop_time)
+}
+
 /// The state of active privacy sensors.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PrivacyState {
