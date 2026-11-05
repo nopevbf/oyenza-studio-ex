@@ -1308,10 +1308,10 @@ pub fn draw_privacy_dot(ui: &mut Ui, st: &AppState, body: Rect) {
     };
     let color = Color::hex(dot_color.hex());
     let cy = body.center().y;
-    let cx = body.right() - 8.0;
+    let cx = body.right() - 10.0;
     let center = Point::new(cx, cy);
-    ui.c.fill_circle(center, 4.0, color.with_alpha(0.3));
-    ui.c.fill_circle(center, 2.5, color);
+    ui.c.fill_circle(center, 5.0, color.with_alpha(0.35));
+    ui.c.fill_circle(center, 3.0, color);
 }
 
 #[cfg(test)]

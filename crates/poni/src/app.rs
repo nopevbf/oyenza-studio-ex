@@ -2393,6 +2393,7 @@ impl App {
             }
             AppEvent::Privacy(p) => {
                 if self.st.privacy != p {
+                    crate::pinfo!("app: privacy state changed to camera={} mic={}", p.camera, p.microphone);
                     self.st.privacy = p;
                     self.request_frame();
                 }
