@@ -1,6 +1,6 @@
 {
   "about": "Oyenza Studio's update file. payload is signed (ECDSA P-256, SHA-256) with the key named by key; see docs/updates.md.",
-  "payload": "{\"schema\":1,\"version\":\"1.2.0\",\"date\":\"2026-11-05\",\"headline\":\"Calendar Island Countdown & Event Notifications:\",\"notes\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.0\",\"windows\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.0/Oyenza-Studio-Setup-1.2.0.exe\",\"size\":2711124,\"sha256\":\"ba6b98fb572044c218ba117059928130534896b20256054fd93d3004e520e607\"},\"mac\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.0/Oyenza-Studio-1.2.0-mac.dmg\",\"size\":5259849,\"sha256\":\"ffeff2fcad9463e330832b80c49b1d25c7352f4ecbc868c2ba215e23e3573eea\"}}",
-  "signature": "aEGohIfATsOMizmzqYHm+eDCnhNhzQaTPo/B7M5nYr8Fwamrj7IRow5gARvYjC/P0Eg6BayIbW/QK/R9SgSqmQ==",
+  "payload": "{\"schema\":1,\"version\":\"1.2.1\",\"date\":\"2026-11-05\",\"headline\":\"Privacy Indicators, Dynamic Eyes & Glove Wave, and Battery Status Line:\",\"notes\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/tag/v1.2.1\",\"windows\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.1/Oyenza-Studio-Setup-1.2.1.exe\",\"size\":2718836,\"sha256\":\"e0734529db26769524782f3f4d4d1e0e8f74cc90222b0c04afc070ecfbb74910\"},\"mac\":{\"url\":\"https://github.com/nopevbf/oyenza-studio-ex/releases/download/v1.2.1/Oyenza-Studio-1.2.1-mac.dmg\",\"size\":5267340,\"sha256\":\"c04933dd0cdda8e4ff276bd03d3234f3c8723f41aac242c44e61816dac6de12e\"}}",
+  "signature": "9xlRvCFpJbQXhPd/x7nTCQqCPYwzLj6AgbyxMtKfoIFu/roBRjXGIcIGYkSn8M8Vjsj6skThRayhp15B1mnvLQ==",
   "key": "f62e3707a88cbc9a"
 }
