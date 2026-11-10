@@ -2392,16 +2392,29 @@ impl App {
             AppEvent::Volume { level, muted, switched } => {
                 let first = !self.st.volume.known;
                 self.st.volume = crate::state::VolumeState { level, muted, known: true };
-                let suppress_in_fullscreen = self.st.game.active && !self.st.settings.hud_in_fullscreen;
+                let in_fullscreen = self.fullscreen_on || self.st.game.active;
+                let suppress_in_fullscreen = in_fullscreen && !self.st.settings.hud_in_fullscreen;
                 if !first && !switched && !self.st.should_suppress_volume_hud() && self.st.settings.hud_volume && !suppress_in_fullscreen {
+                    let now = clock::mono();
+                    self.st.now = now;
                     self.st.show_hud(HudKind::Volume { level, muted }, 1.6);
+                    if in_fullscreen && self.st.settings.hud_in_fullscreen {
+                        self.apply_fullscreen(now);
+                    }
+                    self.request_frame();
                 }
             }
             AppEvent::Brightness { level } => {
                 self.st.brightness = crate::state::BrightnessState { level, known: true };
-                let suppress_in_fullscreen = self.st.game.active && !self.st.settings.hud_in_fullscreen;
+                let in_fullscreen = self.fullscreen_on || self.st.game.active;
+                let suppress_in_fullscreen = in_fullscreen && !self.st.settings.hud_in_fullscreen;
                 if !suppress_in_fullscreen {
+                    let now = clock::mono();
+                    self.st.now = now;
                     self.st.show_hud(HudKind::Brightness { level }, 1.6);
+                    if in_fullscreen && self.st.settings.hud_in_fullscreen {
+                        self.apply_fullscreen(now);
+                    }
                     self.request_frame();
                 }
             }
@@ -2856,8 +2869,19 @@ impl App {
     /// under Show over games while the readout is away: between its peeks
     /// (peeks only), or once Alt+Shift+F hid it. Then nothing covers the game,
     /// and Windows sends its frames straight to the screen.
+    ///
+    /// When `hud_in_fullscreen` is enabled and a HUD overlay (volume, brightness)
+    /// is active, the island is revealed for the HUD's brief duration.
     fn fullscreen_hides(&self, now: f64) -> bool {
-        self.fullscreen_on && (self.st.settings.hide_in_fullscreen || (self.st.game.active && self.readout_away(now)))
+        let hud_active = self.st.hud.as_ref().is_some_and(|h| now < h.until);
+        should_fullscreen_hide(
+            self.fullscreen_on,
+            self.st.settings.hide_in_fullscreen,
+            self.st.settings.hud_in_fullscreen,
+            hud_active,
+            self.st.game.active,
+            self.readout_away(now),
+        )
     }
 
     /// Show over games: the readout is off the screen. It stays unless the
@@ -3514,6 +3538,9 @@ impl App {
         if let Some(h) = &self.st.hud {
             if now >= h.until {
                 self.st.hud = None;
+                if self.fullscreen_on {
+                    self.apply_fullscreen(now);
+                }
             }
         }
         if let Some(n) = &self.st.notice {
@@ -5605,6 +5632,25 @@ fn surface_size(island: &Island, body_w: f32, body_h: f32, scale: f32, mon_w: i3
     (w, h)
 }
 
+/// Pure decision whether the island window should be hidden during full-screen mode.
+/// Allows unit testing of the state transition matrix without window/graphics handles.
+pub(crate) fn should_fullscreen_hide(
+    fullscreen_on: bool,
+    hide_in_fullscreen: bool,
+    hud_in_fullscreen: bool,
+    hud_active: bool,
+    game_active: bool,
+    readout_away: bool,
+) -> bool {
+    if !fullscreen_on {
+        return false;
+    }
+    if hud_in_fullscreen && hud_active {
+        return false;
+    }
+    hide_in_fullscreen || (game_active && readout_away)
+}
+
 /// Where the island window takes the mouse (DIPs, window space). Open: the
 /// whole canvas, a forgiving margin around the panel. Collapsed: the
 /// island's own outline. While it floats (the Pill theme) the gap above it
@@ -5845,5 +5891,37 @@ mod tests {
                 assert_eq!(surface_size(&i, 620.0, 400.0, s, mon_w), classic, "back to Classic at {s} on {mon_w}");
             }
         }
+    }
+
+    #[test]
+    fn fullscreen_hud_visibility_matrix() {
+        // ISTQB EP & BVA State Transition tests for should_fullscreen_hide
+
+        // 1. Not in fullscreen: never hidden by fullscreen logic
+        assert!(!should_fullscreen_hide(false, true, true, false, false, false));
+        assert!(!should_fullscreen_hide(false, true, true, true, false, false));
+
+        // 2. Fullscreen on, hide_in_fullscreen = true, no HUD active: hidden
+        assert!(should_fullscreen_hide(true, true, true, false, false, false));
+
+        // 3. Fullscreen on, hide_in_fullscreen = true, HUD active, hud_in_fullscreen = true:
+        // Island MUST NOT hide, so the volume/brightness HUD overlay shows on screen!
+        assert!(!should_fullscreen_hide(true, true, true, true, false, false));
+
+        // 4. Fullscreen on, hide_in_fullscreen = true, HUD active, hud_in_fullscreen = false:
+        // User turned off HUD in fullscreen, so it remains hidden.
+        assert!(should_fullscreen_hide(true, true, false, true, false, false));
+
+        // 5. In game with readout away, active HUD with hud_in_fullscreen = true:
+        // HUD reveals the island even while readout is away
+        assert!(!should_fullscreen_hide(true, false, true, true, true, true));
+
+        // 6. In game with readout away, no active HUD:
+        // Island hides as readout is away
+        assert!(should_fullscreen_hide(true, false, true, false, true, true));
+
+        // 7. In game with readout showing (readout_away = false):
+        // Island stays shown
+        assert!(!should_fullscreen_hide(true, false, true, false, true, false));
     }
 }

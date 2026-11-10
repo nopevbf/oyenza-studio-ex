@@ -145,6 +145,7 @@ pub struct Settings {
     pub suppress_windows_brightness_osd: bool,
     pub suppress_windows_toast_banners: bool,
     pub idle_look_only: bool,
+    #[serde(default = "true_val")]
     pub hud_in_fullscreen: bool,
 }
 
@@ -274,7 +275,7 @@ impl Default for Settings {
             suppress_windows_brightness_osd: false,
             suppress_windows_toast_banners: false,
             idle_look_only: false,
-            hud_in_fullscreen: false,
+            hud_in_fullscreen: true,
         }
     }
 }

@@ -7,7 +7,7 @@ fn test_osd_suppression_and_idle_look_defaults() {
     assert!(!s.suppress_windows_brightness_osd, "suppress_windows_brightness_osd should default to false");
     assert!(!s.suppress_windows_toast_banners, "suppress_windows_toast_banners should default to false");
     assert!(!s.idle_look_only, "idle_look_only should default to false");
-    assert!(!s.hud_in_fullscreen, "hud_in_fullscreen should default to false");
+    assert!(s.hud_in_fullscreen, "hud_in_fullscreen should default to true");
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn test_osd_suppression_empty_json_fallbacks_to_defaults() {
     assert!(!s.suppress_windows_brightness_osd);
     assert!(!s.suppress_windows_toast_banners);
     assert!(!s.idle_look_only);
-    assert!(!s.hud_in_fullscreen);
+    assert!(s.hud_in_fullscreen);
 }
 
 #[test]

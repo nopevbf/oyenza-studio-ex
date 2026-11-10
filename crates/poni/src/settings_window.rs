@@ -1450,7 +1450,7 @@ mod tests {
         assert!(!st.settings.suppress_windows_volume_osd);
         assert!(!st.settings.suppress_windows_brightness_osd);
         assert!(!st.settings.suppress_windows_toast_banners);
-        assert!(!st.settings.hud_in_fullscreen);
+        assert!(st.settings.hud_in_fullscreen);
 
         apply(&mut st, Key::SuppressWinVolume, Act::Toggle);
         assert!(st.settings.suppress_windows_volume_osd);
@@ -1462,6 +1462,6 @@ mod tests {
         assert!(st.settings.suppress_windows_toast_banners);
 
         apply(&mut st, Key::HudInFullscreen, Act::Toggle);
-        assert!(st.settings.hud_in_fullscreen);
+        assert!(!st.settings.hud_in_fullscreen);
     }
 }
