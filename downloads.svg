@@ -15,10 +15,10 @@
 <path d="M87.0,235.0H426.0A4.0,4.0 0 0 1 430.0,239.0V249.0A4.0,4.0 0 0 1 426.0,253.0H87.0Z" fill="#D9661C"/>
 <path d="M87.0,267.0H426.0A4.0,4.0 0 0 1 430.0,271.0V281.0A4.0,4.0 0 0 1 426.0,285.0H87.0Z" fill="#D9661C"/>
 <path d="M87.0,299.0H340.3A4.0,4.0 0 0 1 344.3,303.0V313.0A4.0,4.0 0 0 1 340.3,317.0H87.0Z" fill="#D9661C"/>
-<path d="M58.9,556.0V530.0A4.0,4.0 0 0 1 62.9,526.0H72.6A4.0,4.0 0 0 1 76.6,530.0V556.0Z" fill="#D9661C"/>
-<path d="M88.5,556.0V555.0A4.0,4.0 0 0 1 92.5,551.0H102.2A4.0,4.0 0 0 1 106.2,555.0V556.0Z" fill="#D9661C"/>
-<path d="M265.8,556.0V410.0A4.0,4.0 0 0 1 269.8,406.0H279.6A4.0,4.0 0 0 1 283.6,410.0V556.0Z" fill="#D9661C"/>
-<path d="M679.7,556.0V555.0A4.0,4.0 0 0 1 683.7,551.0H693.4A4.0,4.0 0 0 1 697.4,555.0V556.0Z" fill="#D9661C"/>
+<path d="M58.7,556.0V530.0A4.0,4.0 0 0 1 62.7,526.0H71.7A4.0,4.0 0 0 1 75.7,530.0V556.0Z" fill="#D9661C"/>
+<path d="M87.1,556.0V555.0A4.0,4.0 0 0 1 91.1,551.0H100.2A4.0,4.0 0 0 1 104.2,555.0V556.0Z" fill="#D9661C"/>
+<path d="M257.6,556.0V410.0A4.0,4.0 0 0 1 261.6,406.0H270.7A4.0,4.0 0 0 1 274.7,410.0V556.0Z" fill="#D9661C"/>
+<path d="M655.6,556.0V555.0A4.0,4.0 0 0 1 659.6,551.0H668.6A4.0,4.0 0 0 1 672.6,555.0V556.0Z" fill="#D9661C"/>
 <text x="28.0" y="44.0" font-size="16" fill="#2B1B10" font-weight="600">Downloads per release</text>
 <text x="77.0" y="88.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">1.3.0</text>
 <text x="781.0" y="88.5" font-size="14" fill="#2B1B10" font-weight="600">8</text>
@@ -37,15 +37,15 @@
 <text x="77.0" y="312.0" font-size="14" fill="#6B5442" text-anchor="end" style="font-variant-numeric: tabular-nums">0.2.14</text>
 <text x="352.3" y="312.5" font-size="14" fill="#2B1B10" font-weight="600">3</text>
 <text x="28.0" y="368.0" font-size="16" fill="#2B1B10" font-weight="600">Downloads per day</text>
-<text x="777.2" y="549.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">0</text>
-<text x="274.7" y="399.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">30</text>
+<text x="777.8" y="549.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">0</text>
+<text x="266.2" y="399.0" font-size="13" fill="#2B1B10" font-weight="600" text-anchor="middle">30</text>
 <text x="43.0" y="560.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">0</text>
 <text x="43.0" y="510.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">10</text>
 <text x="43.0" y="460.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">20</text>
 <text x="43.0" y="410.5" font-size="12" fill="#7A6450" text-anchor="end" style="font-variant-numeric: tabular-nums">30</text>
-<text x="777.2" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">22 Nov</text>
-<text x="570.3" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">15 Nov</text>
-<text x="363.4" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">8 Nov</text>
-<text x="156.5" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">1 Nov</text>
+<text x="777.8" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">23 Nov</text>
+<text x="578.8" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">16 Nov</text>
+<text x="379.9" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">9 Nov</text>
+<text x="180.9" y="576.0" font-size="12" fill="#7A6450" text-anchor="middle">2 Nov</text>
 </g>
 </svg>
