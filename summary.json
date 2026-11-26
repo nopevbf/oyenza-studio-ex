@@ -1,11 +1,11 @@
 {
   "repo": "nopevbf/oyenza-studio-ex",
-  "checked_at": "2026-11-25T01:06:53Z",
+  "checked_at": "2026-11-26T03:10:29Z",
   "since": "2026-10-28",
   "downloads": 38,
   "github_count": 38,
   "ci_count": 0,
-  "last_7_days": 1,
+  "last_7_days": 0,
   "latest": {
     "release": "v1.3.0",
     "downloads": 8
@@ -252,6 +252,10 @@
     },
     {
       "date": "2026-11-25",
+      "downloads": 0
+    },
+    {
+      "date": "2026-11-26",
       "downloads": 0
     }
   ]
