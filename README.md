@@ -25,6 +25,7 @@
 | Day | Downloads |
 | --- | --: |
 | Today | 0 |
+| 27 Nov 2026 | 0 |
 | 26 Nov 2026 | 0 |
 | 25 Nov 2026 | 0 |
 | 24 Nov 2026 | 0 |
@@ -53,7 +54,8 @@
 | 1 Nov 2026 | 0 |
 | 31 Oct 2026 | 0 |
 | 30 Oct 2026 | 1 |
-| 29 Oct 2026 | 6 |
+
+Every day since 29 Oct 2026: [downloads.csv](data/downloads.csv).
 
 ## On GitHub
 
@@ -71,4 +73,4 @@
 
 </details>
 
-<sub>Updated 27 Nov 2026, 04:34 UTC by [Download stats](https://github.com/nopevbf/oyenza-studio-ex/actions/workflows/metrics.yml), every hour · Data: [downloads](data/downloads.csv), [CI downloads](data/ci-downloads.csv), [stars](data/repo.csv), [summary.json](summary.json)</sub>
+<sub>Updated 28 Nov 2026, 04:58 UTC by [Download stats](https://github.com/nopevbf/oyenza-studio-ex/actions/workflows/metrics.yml), every hour · Data: [downloads](data/downloads.csv), [CI downloads](data/ci-downloads.csv), [stars](data/repo.csv), [summary.json](summary.json)</sub>
